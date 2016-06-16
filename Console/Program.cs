@@ -10,7 +10,7 @@ namespace SeaMonkey
         public static readonly Random Rnd = new Random(235346798);
 
 
-        static void Main()
+        static void Main(string[] args)
         {
             try
             {
@@ -19,13 +19,14 @@ namespace SeaMonkey
                     .WriteTo.ColoredConsole()
                     .CreateLogger();
 
-                var endpoint = new OctopusServerEndpoint("http://localhost/loadtest", "API-OZGIAAFKSPBEQQHVMFI2NO0BZLG");
+                var endpoint = new OctopusServerEndpoint(args[0], args[1]);
                 var repository = new OctopusRepository(endpoint);
-                new SetupMonkey(repository)
-                    .Run(70);
 
-                new DeployMonkey(repository)
-                    .Run("Lots of Channels, Releases and Deployments", 3000);
+                new SetupMonkey(repository).Run(2,8);
+                //new DeployMonkey(repository).RunForAllProjects(100);
+                new DeployMonkey(repository).RunForGroup(SetupMonkey.TenantedGroupName, 10);
+               // new DeployMonkey(repository).RunForAllProjects(1000);
+               // new DeployMonkey(repository).RunForGroup(SetupMonkey.TenantedGroupName, 1000);
             }
             catch (Exception ex)
             {

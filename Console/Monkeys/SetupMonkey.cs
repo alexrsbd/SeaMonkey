@@ -10,6 +10,7 @@ namespace SeaMonkey.Monkeys
 
     public class SetupMonkey : Monkey
     {
+        public const string TenantedGroupName = "A Tenanted Group";
 
         public SetupMonkey(OctopusRepository repository) : base(repository)
         {
@@ -19,11 +20,42 @@ namespace SeaMonkey.Monkeys
         public IntProbability ExtraChannelsPerProject { get; set; } = new DiscretProbability(0, 1, 1, 5);
         public IntProbability EnvironmentsPerGroup { get; set; } = new FibonacciProbability();
 
-        public void Run(int upToNumberOfGroups)
+        public void Run(int upToNumberOfGroups, int? numberOfTenants = null)
         {
             var numberOfGroups = Repository.ProjectGroups.FindAll().Count();
             for (var x = numberOfGroups; x <= upToNumberOfGroups; x++)
                 Create(x);
+
+            if (numberOfTenants.HasValue)
+                CreateTenants(numberOfTenants.Value);
+        }
+
+        private void CreateTenants(int numberOfTenants)
+        {
+            var tenantedGroup = Repository.ProjectGroups.FindByName(TenantedGroupName);
+            if (tenantedGroup == null)
+            {
+                tenantedGroup = Repository.ProjectGroups.FindOne(g => g.Name.StartsWith("Group-"));
+                tenantedGroup.Name = TenantedGroupName;
+                Repository.ProjectGroups.Modify(tenantedGroup);
+            }
+            var projects = Repository.ProjectGroups.GetProjects(tenantedGroup);
+            var currentTenantCount = Repository.Tenants.FindAll().Count;
+            var lifecycles = Repository.Lifecycles.FindAll();
+            var environments = lifecycles
+                .Where(l => projects.Any(p => p.LifecycleId == l.Id))
+                .SelectMany(l => l.Phases[0].OptionalDeploymentTargets)
+                .ToArray();
+
+            for (var x = currentTenantCount; x <= numberOfTenants; x++)
+            {
+                Repository.Tenants.Create(new TenantResource()
+                {
+                    Name = "Tenant-" + x,
+                    ProjectEnvironments = projects.ToDictionary(p => p.Id, p => new ReferenceCollection(environments))
+                });
+            }
+
         }
 
         private void Create(int id)
@@ -119,7 +151,11 @@ namespace SeaMonkey.Monkeys
             {
                 Name = "Project" + postfix,
                 ProjectGroupId = group.Id,
-                LifecycleId = lifecycle.Id
+                LifecycleId = lifecycle.Id,
+                ProjectConnectivityPolicy = new ProjectConnectivityPolicy()
+                {
+                    SkipMachineBehavior = SkipMachineBehavior.SkipUnavailableMachines
+                }
             });
         }
 
