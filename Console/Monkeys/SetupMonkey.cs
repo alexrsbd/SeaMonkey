@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using Octopus.Client;
 using Octopus.Client.Model;
 using SeaMonkey.ProbabilitySets;
@@ -20,17 +22,14 @@ namespace SeaMonkey.Monkeys
         public IntProbability ExtraChannelsPerProject { get; set; } = new DiscretProbability(0, 1, 1, 5);
         public IntProbability EnvironmentsPerGroup { get; set; } = new FibonacciProbability();
 
-        public void Run(int upToNumberOfGroups, int? numberOfTenants = null)
+        public void CreateProjectGroups(int numberOfGroups)
         {
-            var numberOfGroups = Repository.ProjectGroups.FindAll().Count();
-            for (var x = numberOfGroups; x <= upToNumberOfGroups; x++)
+            var currentCount = Repository.ProjectGroups.FindAll().Count();
+            for (var x = currentCount; x <= numberOfGroups; x++)
                 Create(x);
-
-            if (numberOfTenants.HasValue)
-                CreateTenants(numberOfTenants.Value);
         }
 
-        private void CreateTenants(int numberOfTenants)
+        public void CreateTenants(int numberOfTenants)
         {
             var tenantedGroup = Repository.ProjectGroups.FindByName(TenantedGroupName);
             if (tenantedGroup == null)
@@ -47,13 +46,20 @@ namespace SeaMonkey.Monkeys
                 .SelectMany(l => l.Phases[0].OptionalDeploymentTargets)
                 .ToArray();
 
-            for (var x = currentTenantCount; x <= numberOfTenants; x++)
+            for (var x = currentTenantCount + 1; x <= numberOfTenants; x++)
             {
-                Repository.Tenants.Create(new TenantResource()
+                var tenant = Repository.Tenants.Create(new TenantResource()
                 {
-                    Name = "Tenant-" + x,
+                    Name = "Tenant-" + x.ToString("000"),
                     ProjectEnvironments = projects.ToDictionary(p => p.Id, p => new ReferenceCollection(environments))
                 });
+
+                using (var client = new HttpClient())
+                {
+                    var img = client.GetByteArrayAsync("https://robohash.org/" + tenant.Name).Result;
+                    using (var ms = new MemoryStream(img))
+                        Repository.Tenants.SetLogo(tenant, tenant.Name + ".png", ms);
+                }
             }
 
         }
@@ -88,10 +94,20 @@ namespace SeaMonkey.Monkeys
                 UpdateDeploymentProcess(project);
                 CreateChannels(project, lifecycle);
                 SetVariables(project);
+                SetProjectImage(project);
                 Log.Information("Created project {name}", project.Name);
             }
         }
 
+        private void SetProjectImage(ProjectResource project)
+        {
+            using (var client = new HttpClient())
+            {
+                var img = client.GetByteArrayAsync("https://api.adorable.io/avatars/400/" + project.Name).Result;
+                using (var ms = new MemoryStream(img))
+                    Repository.Projects.SetLogo(project, project.Name + ".png", ms);
+            }
+        }
 
 
         private void CreateChannels(ProjectResource project, LifecycleResource lifecycle)

@@ -22,11 +22,10 @@ namespace SeaMonkey
                 var endpoint = new OctopusServerEndpoint(args[0], args[1]);
                 var repository = new OctopusRepository(endpoint);
 
-                new SetupMonkey(repository).Run(2,8);
-                //new DeployMonkey(repository).RunForAllProjects(100);
-                new DeployMonkey(repository).RunForGroup(SetupMonkey.TenantedGroupName, 10);
-               // new DeployMonkey(repository).RunForAllProjects(1000);
-               // new DeployMonkey(repository).RunForGroup(SetupMonkey.TenantedGroupName, 1000);
+                new SetupMonkey(repository).CreateProjectGroups(70);
+                new SetupMonkey(repository).CreateTenants(500);
+                new DeployMonkey(repository).RunForGroup(SetupMonkey.TenantedGroupName, 5000);
+                new DeployMonkey(repository).RunForAllProjects(5000);
             }
             catch (Exception ex)
             {

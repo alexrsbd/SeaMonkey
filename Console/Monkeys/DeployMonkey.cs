@@ -40,7 +40,7 @@ namespace SeaMonkey.Monkeys
 
         public void RunForProject(string name, int maxNumberOfDeployments = int.MaxValue)
         {
-            Run(GetProjectInfos(new[] { Repository.Projects.FindByName(name)}), maxNumberOfDeployments);
+            Run(GetProjectInfos(new[] { Repository.Projects.FindByName(name) }), maxNumberOfDeployments);
         }
 
         public void RunForGroup(string name, int maxNumberOfDeployments = int.MaxValue)
@@ -57,7 +57,7 @@ namespace SeaMonkey.Monkeys
                                {
                                    ProjectInfo = p,
                                    EnvironmentId = e,
-                                   Tenant = (TenantResource) null
+                                   Tenant = (TenantResource)null
                                };
             var projectTenantEnvsQ = from p in projectInfos
                                      from t in p.Tenants
@@ -88,7 +88,7 @@ namespace SeaMonkey.Monkeys
         private ProjectInfo[] GetProjectInfos(IReadOnlyList<ProjectResource> projects)
         {
             var lifecycles = Repository.Lifecycles.FindAll().ToArray();
-            
+
             var releases = from r in Repository.Releases.FindAll()
                            let x = new { r.ProjectId, Release = r, Version = SemanticVersion.Parse(r.Version) }
                            group x by x.ProjectId
@@ -124,12 +124,11 @@ namespace SeaMonkey.Monkeys
             if (ChanceOfAProcessChangeOnNewRelease.Get())
                 projectInfo.DeploymentProcess = UpdateDeploymentProcess(projectInfo.Project);
 
-            var newVersion = projectInfo.LatestRelease == null ? "1.0.0.0" : SemanticVersion.Parse(projectInfo.LatestRelease.Version).Increment().ToString();
             var release = new ReleaseResource()
             {
                 ChannelId = projectInfo.Channels[Program.Rnd.Next(0, projectInfo.Channels.Count)].Id,
                 ProjectId = projectInfo.Project.Id,
-                Version = newVersion,
+                Version = GetNextReleaseNumber(projectInfo),
                 SelectedPackages = projectInfo.DeploymentProcess
                     .Steps
                     .SelectMany(s => s.Actions)
@@ -138,6 +137,22 @@ namespace SeaMonkey.Monkeys
                     .ToList()
             };
             projectInfo.LatestRelease = Repository.Releases.Create(release);
+        }
+
+        private string GetNextReleaseNumber(ProjectInfo projectInfo)
+        {
+            if (projectInfo.LatestRelease == null)
+                return "1.0.0";
+
+            var version = SemanticVersion.Parse(projectInfo.LatestRelease.Version).Version;
+            var x = _rnd.Next(100);
+            if (x == 0)
+                version = new Version(version.Major + 1, 0, 0, 0);
+            else if (x < 20)
+                version = new Version(version.Major, version.Minor + 1, 0);
+            else
+                version = new Version(version.Major, version.Minor, version.Build + 1);
+            return version.ToString(3);
         }
 
         public void CreateDeployment(ProjectInfo projectInfo, string environmentId, TenantResource tenant)
