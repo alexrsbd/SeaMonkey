@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Octopus.Client;
 using Octopus.Client.Model;
 using Octopus.Client.Repositories;
@@ -33,24 +34,25 @@ namespace SeaMonkey.Monkeys
         public BooleanProbability ChanceOfANewRelease { get; set; } = new BooleanProbability(0.25);
         public BooleanProbability ChanceOfAProcessChangeOnNewRelease { get; set; } = new BooleanProbability(0.75);
 
-        public void RunForAllProjects(int maxNumberOfDeployments = int.MaxValue)
+        public void RunForAllProjects(TimeSpan delayBetween = default(TimeSpan), int maxNumberOfDeployments = int.MaxValue)
         {
-            Run(GetProjectInfos(Repository.Projects.FindAll()), maxNumberOfDeployments);
+            RunFor("All Projects", () => (prj, env, tenant) => true, delayBetween, maxNumberOfDeployments);
         }
 
-        public void RunForProject(string name, int maxNumberOfDeployments = int.MaxValue)
+        public void RunForProject(string name, TimeSpan delayBetween = default(TimeSpan), int maxNumberOfDeployments = int.MaxValue)
         {
-            Run(GetProjectInfos(new[] { Repository.Projects.FindByName(name) }), maxNumberOfDeployments);
+            RunFor(name, () => (prj, env, tenant) => prj.Project.Name == name, delayBetween, maxNumberOfDeployments);
         }
 
-        public void RunForGroup(string name, int maxNumberOfDeployments = int.MaxValue)
+        public void RunForGroup(string name, TimeSpan delayBetween = default(TimeSpan), int maxNumberOfDeployments = int.MaxValue)
         {
             var group = Repository.ProjectGroups.FindByName(name);
-            Run(GetProjectInfos(Repository.ProjectGroups.GetProjects(group)), maxNumberOfDeployments);
+            RunFor(name, () => (prj, env, tenant) => prj.Project.ProjectGroupId == group.Id, delayBetween, maxNumberOfDeployments);
         }
 
-        private void Run(IReadOnlyList<ProjectInfo> projectInfos, int maxNumberOfDeployments = int.MaxValue)
+        public void RunFor(string description, Func<Func<ProjectInfo, string, TenantResource, bool>> filterFactory, TimeSpan delayBetween = default(TimeSpan), int maxNumberOfDeployments = int.MaxValue)
         {
+            var projectInfos = GetProjectInfos();
             var projectEnvsQ = from p in projectInfos
                                from e in p.EnvironmentIds
                                select new
@@ -73,20 +75,23 @@ namespace SeaMonkey.Monkeys
 
             for (var cnt = 1; cnt <= maxNumberOfDeployments; cnt++)
             {
-                var item = projectEnvs[_rnd.Next(0, projectEnvs.Length)];
+                var filter = filterFactory();
+                var filteredItems = projectEnvs.Where(e => filter(e.ProjectInfo, e.EnvironmentId, e.Tenant)).ToArray();
+                var item = filteredItems[_rnd.Next(0, filteredItems.Length)];
 
                 if (item.ProjectInfo.LatestRelease == null || ChanceOfANewRelease.Get())
                     CreateRelease(item.ProjectInfo);
 
                 CreateDeployment(item.ProjectInfo, item.EnvironmentId, item.Tenant);
 
-
-                Log.Write(cnt % 10 == 0 ? LogEventLevel.Information : LogEventLevel.Verbose, "{n} deployments", cnt);
+                Log.Write(cnt % 10 == 0 ? LogEventLevel.Information : LogEventLevel.Verbose, "{description}: {n} deployments", description, cnt);
+                Thread.Sleep(delayBetween);
             }
         }
 
-        private ProjectInfo[] GetProjectInfos(IReadOnlyList<ProjectResource> projects)
+        private ProjectInfo[] GetProjectInfos()
         {
+            var projects = Repository.Projects.FindAll();
             var lifecycles = Repository.Lifecycles.FindAll().ToArray();
 
             var releases = from r in Repository.Releases.FindAll()
