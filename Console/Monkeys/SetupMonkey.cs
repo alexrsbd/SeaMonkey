@@ -29,40 +29,6 @@ namespace SeaMonkey.Monkeys
                 Create(x);
         }
 
-        public void CreateTenants(int numberOfTenants)
-        {
-            var tenantedGroup = Repository.ProjectGroups.FindByName(TenantedGroupName);
-            if (tenantedGroup == null)
-            {
-                tenantedGroup = Repository.ProjectGroups.FindOne(g => g.Name.StartsWith("Group-"));
-                tenantedGroup.Name = TenantedGroupName;
-                Repository.ProjectGroups.Modify(tenantedGroup);
-            }
-            var projects = Repository.ProjectGroups.GetProjects(tenantedGroup);
-            var currentTenantCount = Repository.Tenants.FindAll().Count;
-            var lifecycles = Repository.Lifecycles.FindAll();
-            var environments = lifecycles
-                .Where(l => projects.Any(p => p.LifecycleId == l.Id))
-                .SelectMany(l => l.Phases[0].OptionalDeploymentTargets)
-                .ToArray();
-
-            for (var x = currentTenantCount + 1; x <= numberOfTenants; x++)
-            {
-                var tenant = Repository.Tenants.Create(new TenantResource()
-                {
-                    Name = "Tenant-" + x.ToString("000"),
-                    ProjectEnvironments = projects.ToDictionary(p => p.Id, p => new ReferenceCollection(environments))
-                });
-
-                using (var client = new HttpClient())
-                {
-                    var img = client.GetByteArrayAsync("https://robohash.org/" + tenant.Name).Result;
-                    using (var ms = new MemoryStream(img))
-                        Repository.Tenants.SetLogo(tenant, tenant.Name + ".png", ms);
-                }
-            }
-
-        }
 
         private void Create(int id)
         {
@@ -94,20 +60,11 @@ namespace SeaMonkey.Monkeys
                 UpdateDeploymentProcess(project);
                 CreateChannels(project, lifecycle);
                 SetVariables(project);
-                SetProjectImage(project);
                 Log.Information("Created project {name}", project.Name);
             }
         }
 
-        private void SetProjectImage(ProjectResource project)
-        {
-            using (var client = new HttpClient())
-            {
-                var img = client.GetByteArrayAsync("https://api.adorable.io/avatars/400/" + project.Name).Result;
-                using (var ms = new MemoryStream(img))
-                    Repository.Projects.SetLogo(project, project.Name + ".png", ms);
-            }
-        }
+
 
 
         private void CreateChannels(ProjectResource project, LifecycleResource lifecycle)
@@ -168,10 +125,6 @@ namespace SeaMonkey.Monkeys
                 Name = "Project" + postfix,
                 ProjectGroupId = group.Id,
                 LifecycleId = lifecycle.Id,
-                ProjectConnectivityPolicy = new ProjectConnectivityPolicy()
-                {
-                    SkipMachineBehavior = SkipMachineBehavior.SkipUnavailableMachines
-                }
             });
         }
 
