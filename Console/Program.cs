@@ -17,6 +17,9 @@ namespace SeaMonkey
         {
             Random rnd = new Random();
 
+            const string server = "http://localhost:8065/";
+            const string apikey = "API-HM8KZT6UKLBUGU0IBVDAUJBSWG";
+
             try
             {
                 Log.Logger = new LoggerConfiguration()
@@ -24,7 +27,7 @@ namespace SeaMonkey
                     .WriteTo.ColoredConsole()
                     .CreateLogger();
 
-                var endpoint = new OctopusServerEndpoint(args[0], args[1]);
+                var endpoint = new OctopusServerEndpoint(server, apikey);
                 var repository = new OctopusRepository(endpoint);
 
                 new SetupMonkey(repository)
