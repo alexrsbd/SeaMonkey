@@ -59,6 +59,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Monkeys\ConfigurationMonkey.cs" />
     <Compile Include="Monkeys\DeployMonkey.cs" />
     <Compile Include="Monkeys\Monkey.cs" />
     <Compile Include="ProbabilitySets\BooleanProbability.cs" />
