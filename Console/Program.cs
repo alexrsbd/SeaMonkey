@@ -19,8 +19,10 @@ namespace SeaMonkey
 
             //const string server = "http://localhost:8065/";
             //const string apikey = "API-HM8KZT6UKLBUGU0IBVDAUJBSWG";
-            const string server = "http://localhost";
-            const string apikey = "API-PFTW3YDKOF05TCCXQAXXO7DANEY";
+            //const string server = "http://localhost";
+            //const string apikey = "API-PFTW3YDKOF05TCCXQAXXO7DANEY";
+            const string server = "http://localhost:8065";
+            const string apikey = "API-GCCFRMSJ53TA9S9RN3SPW2UOPA8";
 
             try
             {
@@ -32,13 +34,13 @@ namespace SeaMonkey
                 var endpoint = new OctopusServerEndpoint(server, apikey);
                 var repository = new OctopusRepository(endpoint);
 
-                //new SetupMonkey(repository)
-                //{
-                //    StepsPerProject = new LinearProbability(1,3)
-                //}.CreateProjectGroups(10);
+                new SetupMonkey(repository)
+                {
+                    StepsPerProject = new LinearProbability(1,3)
+                }.CreateProjectGroups(10);
                 //new SetupMonkey(repository).CreateTenants(500);
                 //new DeployMonkey(repository).RunForGroup(SetupMonkey.TenantedGroupName, 5000);
-                //new DeployMonkey(repository).RunForAllProjects(maxNumberOfDeployments:100);
+                new DeployMonkey(repository).RunForAllProjects(maxNumberOfDeployments:100);
                 new ConfigurationMonkey(repository)
                     .CreateRecords(70, 70, 70);
 
