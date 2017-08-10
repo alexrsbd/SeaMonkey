@@ -34,14 +34,16 @@ namespace SeaMonkey
                 var endpoint = new OctopusServerEndpoint(server, apikey);
                 var repository = new OctopusRepository(endpoint);
 
-                new SetupMonkey(repository)
-                {
-                    StepsPerProject = new LinearProbability(1,3)
-                }.CreateProjectGroups(10);
                 //new SetupMonkey(repository).CreateTenants(500);
                 //new DeployMonkey(repository).RunForGroup(SetupMonkey.TenantedGroupName, 5000);
-                new DeployMonkey(repository).RunForAllProjects(maxNumberOfDeployments:100);
-                new ConfigurationMonkey(repository)
+                //new SetupMonkey(repository)
+                //{
+                //    StepsPerProject = new LinearProbability(1,3)
+                //}.CreateProjectGroups(10);
+                //new DeployMonkey(repository).RunForAllProjects(maxNumberOfDeployments:100);
+                //new ConfigurationMonkey(repository)
+                //    .CreateRecords(70, 70, 70);
+                new InfrastructureMonkey(repository)
                     .CreateRecords(70, 70, 70);
 
             }

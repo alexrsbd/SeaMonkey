@@ -1,11 +1,6 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
+﻿using System.Linq;
 using Octopus.Client;
 using Octopus.Client.Model;
-using SeaMonkey.ProbabilitySets;
-using Serilog;
 using System;
 
 namespace SeaMonkey.Monkeys
