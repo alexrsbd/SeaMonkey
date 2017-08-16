@@ -62,6 +62,7 @@
     <Compile Include="Monkeys\ConfigurationMonkey.cs" />
     <Compile Include="Monkeys\DeployMonkey.cs" />
     <Compile Include="Monkeys\InfrastructureMonkey.cs" />
+    <Compile Include="Monkeys\LibraryMonkey.cs" />
     <Compile Include="Monkeys\Monkey.cs" />
     <Compile Include="ProbabilitySets\BooleanProbability.cs" />
     <Compile Include="ProbabilitySets\DiscretProbability.cs" />

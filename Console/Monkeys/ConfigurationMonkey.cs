@@ -11,11 +11,15 @@ namespace SeaMonkey.Monkeys
         {
         }
 
-        public void CreateRecords(int numberOfSubscriptions, int numberOfTeams, int numberOfUsers)
+        public void CreateRecords(int numberOfSubscriptions,
+            int numberOfTeams,
+            int numberOfUsers,
+            int numberOfUserRoles)
         {
             CreateDisabledSubscriptions(numberOfSubscriptions);
             CreateEmptyTeams(numberOfTeams);
             CreateInactiveUsers(numberOfUsers);
+            CreateEmptyUserRoles(numberOfUserRoles);
         }
 
         #region Subscriptions
@@ -93,6 +97,31 @@ namespace SeaMonkey.Monkeys
                     Password = "RickAndMortyForPresident"
                 });
     }
+
+        #endregion
+
+        #region UserRoles
+
+        public void CreateEmptyUserRoles(int numberOfRecords)
+        {
+            var currentCount = Repository.UserRoles.FindAll().Count();
+            for (var x = currentCount; x <= numberOfRecords; x++)
+                CreateEmptyUserRole(x);
+        }
+
+        private UserRoleResource CreateEmptyUserRole(int prefix)
+        {
+            return
+                Repository.UserRoles.Create(new UserRoleResource()
+                {
+                    Name = "UserRole-" + prefix.ToString("000"),
+                    Description = "They're robots Morty! It's okay to shoot them! They're just robots!",
+                    CanBeDeleted = true,
+                    SupportedRestrictions = new System.Collections.Generic.List<string>(),
+                    PermissionDescriptions = new System.Collections.Generic.List<string>(),
+                    GrantedPermissions = new System.Collections.Generic.List<Permission>(),
+                });
+        }
 
         #endregion
     }
