@@ -89,7 +89,7 @@ namespace SeaMonkey
             {
                 Console.WriteLine("Running infrastructure monkey...");
                 new InfrastructureMonkey(repository)
-                    .CreateRecords(70, 70, 70);
+                    .CreateRecords(70, 70, 70, 70);
             }
 
             if (runLibraryMonkey)

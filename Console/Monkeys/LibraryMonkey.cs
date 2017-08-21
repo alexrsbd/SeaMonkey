@@ -82,7 +82,7 @@ namespace SeaMonkey.Monkeys
                 Repository.LibraryVariableSets.Create(new LibraryVariableSetResource()
                 {
                     Name = "LibraryVariableSet-" + prefix.ToString("000"),
-                    Description = "Wubbu lubbu dub dub!"
+                    Description = "Rick: Uh-huh, yeah, that’s the difference between you and me, Morty. I never go back to the carpet store"
                 });
         }
 
