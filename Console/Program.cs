@@ -21,7 +21,7 @@ namespace SeaMonkey
 
             var server = args[0];
             var apikey = args[1];
-
+            //const string apikey = "API-GCCFRMSJ53TA9S9RN3SPW2UOPA8";
             const bool runSetupMonkey = true;
             const bool runDeployMonkey = true;
             const bool runConfigurationMonkey = false;

@@ -21,12 +21,17 @@ namespace SeaMonkey.Monkeys
 
         protected IReadOnlyList<MachineResource> GetMachines()
         {
-            var machines = Repository.Machines.FindAll();
-            foreach(var machine in machines.Where(m => !m.Roles.Contains("InstallStuff")))
-            {
-                machine.Roles.Add("InstallStuff");
-                Repository.Machines.Modify(machine);
-            }
+            var machines = Repository.Machines.FindAll(pathParameters: new { take = int.MaxValue });
+            machines
+                .Where(m => !m.Roles.Contains("InstallStuff"))
+                .AsParallel()
+                .WithDegreeOfParallelism(30)
+                .ForAll(machine =>
+                    {
+                        machine.Roles.Add("InstallStuff");
+                        Repository.Machines.Modify(machine);
+                    }
+                );
             return machines;
         }
 
@@ -44,19 +49,16 @@ namespace SeaMonkey.Monkeys
         protected void SetVariables(ProjectResource project)
         {
             var numberOfVariables = VariablesPerProject.Get();
-            for (var p = 1; p <= numberOfVariables; p++)
-            {
-                var variableSet = Repository.VariableSets.Get(project.VariableSetId);
-                variableSet.Variables = Enumerable.Range(1, numberOfVariables)
-                    .Select(n => new VariableResource()
-                    {
-                        Name = "Variable " + n.ToString("000"),
-                        Value = "This is the variable value for Variable " + n.ToString("000")
-                    })
-                    .ToArray();
+            var variableSet = Repository.VariableSets.Get(project.VariableSetId);
+            variableSet.Variables = Enumerable.Range(1, numberOfVariables)
+                .Select(n => new VariableResource()
+                {
+                    Name = "Variable " + n.ToString("000"),
+                    Value = "This is the variable value for Variable " + n.ToString("000")
+                })
+                .ToArray();
 
-                Repository.VariableSets.Modify(variableSet);
-            }
+            Repository.VariableSets.Modify(variableSet);
         }
     }
 }

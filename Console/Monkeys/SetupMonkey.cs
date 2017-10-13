@@ -16,20 +16,20 @@ namespace SeaMonkey.Monkeys
         {
         }
 
-        public IntProbability ProjectsPerGroup { get; set; } = new LinearProbability(5, 10);
+        public IntProbability ProjectsPerGroup { get; set; } = new LinearProbability(5, 15);
         public IntProbability ExtraChannelsPerProject { get; set; } = new DiscretProbability(0, 1, 1, 5);
         public IntProbability EnvironmentsPerGroup { get; set; } = new FibonacciProbability();
 
         public void CreateProjectGroups(int numberOfGroups)
         {
+            var machines = GetMachines();
             var currentCount = Repository.ProjectGroups.FindAll().Count();
             for (var x = currentCount; x <= numberOfGroups; x++)
-                Create(x);
+                Create(x, machines);
         }
 
-        private void Create(int id)
+        private void Create(int id, IReadOnlyList<MachineResource> machines)
         {
-            var machines = GetMachines();
             var envs = CreateEnvironments(id, machines);
             var lc = CreateLifecycle(id, envs);
             var group = CreateProjectGroup(id);
@@ -51,14 +51,17 @@ namespace SeaMonkey.Monkeys
         {
             var numberOfProjects = ProjectsPerGroup.Get();
             Log.Information("Creating {n} projects for {group}", numberOfProjects, group.Name);
-            for (var p = 1; p <= numberOfProjects; p++)
-            {
-                var project = CreateProject(group, lifecycle, $"-{prefix:000}-{p:00}");
-                UpdateDeploymentProcess(project);
-                CreateChannels(project, lifecycle);
-                SetVariables(project);
-                Log.Information("Created project {name}", project.Name);
-            }
+            Enumerable.Range(1, numberOfProjects)
+                .AsParallel()
+                .ForAll(p =>
+                    {
+                        var project = CreateProject(group, lifecycle, $"-{prefix:000}-{p:00}");
+                        UpdateDeploymentProcess(project);
+                        CreateChannels(project, lifecycle);
+                        SetVariables(project);
+                        Log.Information("Created project {name}", project.Name);
+                    }
+                );
         }
 
 
@@ -67,35 +70,42 @@ namespace SeaMonkey.Monkeys
         private void CreateChannels(ProjectResource project, LifecycleResource lifecycle)
         {
             var numberOfExtraChannels = ExtraChannelsPerProject.Get();
-            for (var p = 1; p <= numberOfExtraChannels; p++)
-            {
-                Repository.Channels.Create(new ChannelResource()
-                {
-                    LifecycleId = lifecycle.Id,
-                    ProjectId = project.Id,
-                    Name = "Channel " + p.ToString("000"),
-                    Rules = new List<ChannelVersionRuleResource>(),
-                    IsDefault = false
-                });
-            }
+
+            Enumerable.Range(1, numberOfExtraChannels)
+                .AsParallel()
+                .ForAll(p =>
+                    Repository.Channels.Create(new ChannelResource()
+                    {
+                        LifecycleId = lifecycle.Id,
+                        ProjectId = project.Id,
+                        Name = "Channel " + p.ToString("000"),
+                        Rules = new List<ChannelVersionRuleResource>(),
+                        IsDefault = false
+                    })
+                );
         }
 
         private EnvironmentResource[] CreateEnvironments(int prefix, IReadOnlyList<MachineResource> machines)
         {
             var envs = new EnvironmentResource[EnvironmentsPerGroup.Get()];
-            for (int e = 1; e <= envs.Length; e++)
-            {
+            Enumerable.Range(1, envs.Length)
+                .AsParallel()
+                .ForAll(e =>
                 envs[e - 1] = Repository.Environments.Create(new EnvironmentResource()
                 {
                     Name = $"Env-{prefix:000}-{e}"
-                });
-            }
-            foreach (var env in envs)
+                })
+            );
+
+            lock(this)
             {
-                var machine = machines[Program.Rnd.Next(0, machines.Count)];
-                Repository.Machines.Refresh(machine);
-                machine.EnvironmentIds.Add(env.Id);
-                Repository.Machines.Modify(machine);
+                foreach (var env in envs)
+                {
+                    var machine = machines[Program.Rnd.Next(0, machines.Count)];
+                    Repository.Machines.Refresh(machine);
+                    machine.EnvironmentIds.Add(env.Id);
+                    Repository.Machines.Modify(machine);
+                }
             }
             return envs;
         }
