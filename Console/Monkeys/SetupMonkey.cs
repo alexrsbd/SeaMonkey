@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using Octopus.Client;
 using Octopus.Client.Model;
 using SeaMonkey.ProbabilitySets;
@@ -127,14 +130,31 @@ namespace SeaMonkey.Monkeys
 
         private ProjectResource CreateProject(ProjectGroupResource group, LifecycleResource lifecycle, string postfix)
         {
-            return Repository.Projects.Create(new ProjectResource()
+            var project = Repository.Projects.Create(new ProjectResource()
             {
                 Name = "Project" + postfix,
                 ProjectGroupId = group.Id,
                 LifecycleId = lifecycle.Id,
             });
+
+            using(var ms = new MemoryStream(CreateLogo(project.Name, "monsterid")))
+                Repository.Projects.SetLogo(project, project.Name + ".png", ms);
+
+            return project;
         }
 
+        /// <summary>
+        /// Type is from https://en.gravatar.com/site/implement/images/
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        private byte[] CreateLogo(string name, string type = "retro")
+        {
+            var hash = BitConverter.ToString(MD5.Create().ComputeHash(Encoding.ASCII.GetBytes(name))).Replace("-", "").ToLower();
 
+            using (var client = new HttpClient())
+                return client.GetByteArrayAsync($"https://www.gravatar.com/avatar/{hash}?s=256&d={type}&r=PG").Result;
+        }
     }
 }
