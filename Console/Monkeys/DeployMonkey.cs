@@ -23,6 +23,7 @@ namespace SeaMonkey.Monkeys
 
         public class ProjectInfo
         {
+            public ProjectGroupResource ProjectGroup { get; set; }
             public ProjectResource Project { get; set; }
             public ReleaseResource LatestRelease { get; set; }
             public ReferenceCollection EnvironmentIds { get; set; }
@@ -78,12 +79,53 @@ namespace SeaMonkey.Monkeys
             }
         }
 
+        public void RunOncePerProjectForGroup(string name, TimeSpan delayBetween = default(TimeSpan))
+        {
+            var group = Repository.ProjectGroups.FindByName(name);
+            RunOncePerProjectFor(name, () => (prj, env) => prj.Project.ProjectGroupId == group.Id, delayBetween);
+        }
+
+        public void RunOncePerProjectFor(string description, Func<Func<ProjectInfo, string, bool>> filterFactory,
+            TimeSpan delayBetween = default(TimeSpan))
+        {
+            var projectInfos = GetProjectInfos();
+            var projectEnvsQ = from p in projectInfos
+                from e in p.EnvironmentIds
+                select new
+                {
+                    ProjectInfo = p,
+                    EnvironmentId = e,
+                };
+
+            var projectEnvs = projectEnvsQ.ToArray();
+
+            var filter = filterFactory();
+            var filteredItems = projectEnvs.Where(e => filter(e.ProjectInfo, e.EnvironmentId)).ToArray();
+
+
+            var cnt = 0;
+            filteredItems.AsParallel()
+                .WithDegreeOfParallelism(10)
+                .ForAll(item =>
+                {
+                    if (item.ProjectInfo.LatestRelease == null || ChanceOfANewRelease.Get())
+                        CreateRelease(item.ProjectInfo);
+
+                    CreateDeployment(item.ProjectInfo, item.EnvironmentId);
+
+                    Interlocked.Increment(ref cnt);
+                    Log.Write(cnt % 10 == 0 ? LogEventLevel.Information : LogEventLevel.Verbose,
+                        "{description}: {n} deployments", description, cnt);
+                    Thread.Sleep(delayBetween);
+                });
+        }
+
         private ProjectInfo[] GetProjectInfos()
         {
-            var projects = Repository.Projects.FindAll();
-            var lifecycles = Repository.Lifecycles.FindAll().ToArray();
+            var projects = Repository.Projects.GetAll();
+            var lifecycles = Repository.Lifecycles.FindAll(pathParameters: new { take= int.MaxValue}).ToArray();
 
-            var releases = from r in Repository.Releases.FindAll()
+            var releases = from r in Repository.Releases.FindAll(pathParameters: new { take = int.MaxValue })
                            let x = new { r.ProjectId, Release = r, Version = SemanticVersion.Parse(r.Version) }
                            group x by x.ProjectId
                            into g
@@ -93,6 +135,13 @@ namespace SeaMonkey.Monkeys
                                LatestRelease = g.OrderByDescending(r => r.Version).First().Release
                            };
 
+            var channels = Repository.Channels.FindAll(pathParameters: new {take = int.MaxValue});
+            var groups = Repository.ProjectGroups.GetAll();
+
+            var processes = projects.AsParallel()
+                .WithDegreeOfParallelism(10)
+                .Select(p => Repository.DeploymentProcesses.Get(p.DeploymentProcessId))
+                .ToArray();
 
             var q = from p in projects
                     join r in releases on p.Id equals r.ProjectId into rj
@@ -101,10 +150,11 @@ namespace SeaMonkey.Monkeys
                     select new ProjectInfo
                     {
                         Project = p,
+                        ProjectGroup = groups.First(g => g.Id == p.ProjectGroupId),
                         LatestRelease = r?.LatestRelease,
                         EnvironmentIds = l.Phases.FirstOrDefault()?.OptionalDeploymentTargets ?? new ReferenceCollection(),
-                        Channels = Repository.Projects.GetChannels(p).Items,
-                        DeploymentProcess = Repository.DeploymentProcesses.Get(p.DeploymentProcessId),
+                        Channels = channels.Where(c => c.ProjectId == p.Id).ToList(),
+                        DeploymentProcess = processes.First(c => c.ProjectId == p.Id)
                     };
 
             return q.ToArray();
