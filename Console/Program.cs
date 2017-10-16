@@ -14,15 +14,20 @@ namespace SeaMonkey
         {
             Random rnd = new Random();
 
-            const string server = "http://localhost:8065/";
-            const string apikey = "API-HM8KZT6UKLBUGU0IBVDAUJBSWG";
-            //const string server = "http://localhost:8065";
-            //const string apikey = "API-GCCFRMSJ53TA9S9RN3SPW2UOPA8";
+            if (args.Length != 2)
+            {
+                throw new ApplicationException("Usage: SeaMonkey.exe <ServerUri> <ApiKey>");
+            }
+
+            var server = args[0];
+            var apikey = args[1];
+
             const bool runSetupMonkey = true;
             const bool runDeployMonkey = true;
             const bool runConfigurationMonkey = false;
             const bool runInfrastructureMonkey = false;
             const bool runLibraryMonkey = false;
+            const bool runTenantMonkey = true;
 
             try
             {
@@ -38,7 +43,8 @@ namespace SeaMonkey
                     runDeployMonkey,
                     runConfigurationMonkey,
                     runInfrastructureMonkey,
-                    runLibraryMonkey);
+                    runLibraryMonkey,
+                    runTenantMonkey);
             }
             catch (Exception ex)
             {
@@ -56,7 +62,8 @@ namespace SeaMonkey
             bool runDeployMonkey,
             bool runConfigurationMonkey,
             bool runInfrastructureMonkey,
-            bool runLibraryMonkey)
+            bool runLibraryMonkey,
+            bool runTenantMonkey)
         {
             Console.WriteLine("Starting monkey business...");
 
@@ -68,6 +75,11 @@ namespace SeaMonkey
                 {
                     StepsPerProject = new LinearProbability(1, 3)
                 }.CreateProjectGroups(10);
+            }
+
+            if (runTenantMonkey)
+            {
+                new TenantMonkey(repository).Create(100);
             }
 
             if (runDeployMonkey)

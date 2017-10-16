@@ -64,8 +64,10 @@
     <Compile Include="Monkeys\InfrastructureMonkey.cs" />
     <Compile Include="Monkeys\LibraryMonkey.cs" />
     <Compile Include="Monkeys\Monkey.cs" />
+    <Compile Include="Monkeys\TenantMonkey.cs" />
     <Compile Include="ProbabilitySets\BooleanProbability.cs" />
     <Compile Include="ProbabilitySets\DiscretProbability.cs" />
+    <Compile Include="ProbabilitySets\FibonacciProbability.cs" />
     <Compile Include="ProbabilitySets\LinearProbability.cs" />
     <Compile Include="ProbabilitySets\ProbabilitySet.cs" />
     <Compile Include="Program.cs" />

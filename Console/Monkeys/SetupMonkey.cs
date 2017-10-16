@@ -12,8 +12,6 @@ namespace SeaMonkey.Monkeys
 
     public class SetupMonkey : Monkey
     {
-        public const string TenantedGroupName = "A Tenanted Group";
-
         public SetupMonkey(OctopusRepository repository) : base(repository)
         {
         }
@@ -28,7 +26,6 @@ namespace SeaMonkey.Monkeys
             for (var x = currentCount; x <= numberOfGroups; x++)
                 Create(x);
         }
-
 
         private void Create(int id)
         {
