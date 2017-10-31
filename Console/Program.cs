@@ -22,12 +22,12 @@ namespace SeaMonkey
             var server = args[0];
             var apikey = args[1];
             //const string apikey = "API-GCCFRMSJ53TA9S9RN3SPW2UOPA8";
-            const bool runSetupMonkey = true;
-            const bool runDeployMonkey = true;
+            const bool runSetupMonkey = false;
+            const bool runDeployMonkey = false;
             const bool runConfigurationMonkey = false;
             const bool runInfrastructureMonkey = false;
             const bool runLibraryMonkey = false;
-            const bool runTenantMonkey = true;
+            const bool runTenantMonkey = false;
 
             try
             {
@@ -108,9 +108,8 @@ namespace SeaMonkey
             {
                 Console.WriteLine("Running library monkey...");
                 new LibraryMonkey(repository)
-                    .CreateRecords(70, 70, 70, 70);
+                    .CreateRecords(70, 70, 10, 7, 70);
             }
-
         }
     }
 }

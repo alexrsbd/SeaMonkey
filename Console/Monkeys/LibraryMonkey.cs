@@ -1,8 +1,6 @@
 ﻿using System.Linq;
 using Octopus.Client;
 using Octopus.Client.Model;
-using System;
-using Octopus.Client.Model.Accounts;
 
 namespace SeaMonkey.Monkeys
 {
@@ -15,11 +13,12 @@ namespace SeaMonkey.Monkeys
         public void CreateRecords(int numberOfFeeds,
             int numberOfScriptModules,
             int numberOfLibraryVariableSets,
+            int numberOfLibraryVariableVariables,
             int numberOfTenantTagSets)
         {
             CreateFeeds(numberOfFeeds);
             CreateScriptModules(numberOfScriptModules);
-            CreateLibraryVariableSets(numberOfLibraryVariableSets);
+            CreateLibraryVariableSets(numberOfLibraryVariableSets, numberOfLibraryVariableVariables);
             CreateTenantTagSets(numberOfTenantTagSets);
         }
 
@@ -69,11 +68,19 @@ namespace SeaMonkey.Monkeys
 
         #region LibraryVariableSets
 
-        public void CreateLibraryVariableSets(int numberOfRecords)
+        public void CreateLibraryVariableSets(int numberOfRecords, int numberOfVariablesPerRecord)
         {
             var currentCount = Repository.LibraryVariableSets.FindAll().Count();
             for (var x = currentCount; x <= numberOfRecords; x++)
-                CreateLibraryVariableSet(x);
+            {
+                var libraryVariableSet = CreateLibraryVariableSet(x);
+                var variableSet = Repository.VariableSets.Get(libraryVariableSet.VariableSetId);
+                for (var y = variableSet.Variables.Count(); y <= numberOfVariablesPerRecord; y++)
+                {
+                    variableSet.AddOrUpdateVariableValue("VariableKey" + y.ToString("000"), "Hello sailor!");
+                    variableSet = Repository.VariableSets.Modify(variableSet);
+                }
+            }
         }
 
         private LibraryVariableSetResource CreateLibraryVariableSet(int prefix)
