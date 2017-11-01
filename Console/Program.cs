@@ -108,7 +108,7 @@ namespace SeaMonkey
             {
                 Console.WriteLine("Running library monkey...");
                 new LibraryMonkey(repository)
-                    .CreateRecords(70, 70, 10, 7, 70);
+                    .CreateRecords(70, 70, 10, 3, 70);
             }
         }
     }

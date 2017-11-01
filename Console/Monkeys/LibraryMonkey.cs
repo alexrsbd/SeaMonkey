@@ -27,7 +27,7 @@ namespace SeaMonkey.Monkeys
         public void CreateFeeds(int numberOfRecords)
         {
             var currentCount = Repository.Feeds.FindAll().Count();
-            for (var x = currentCount; x <= numberOfRecords; x++)
+            for (var x = currentCount; x < numberOfRecords; x++)
                 CreateFeed(x);
         }
 
@@ -48,7 +48,7 @@ namespace SeaMonkey.Monkeys
         public void CreateScriptModules(int numberOfRecords)
         {
             var currentCount = Repository.LibraryVariableSets.FindAll().Count();
-            for (var x = currentCount; x <= numberOfRecords; x++)
+            for (var x = currentCount; x < numberOfRecords; x++)
                 CreateScriptModule(x);
         }
 
@@ -70,14 +70,16 @@ namespace SeaMonkey.Monkeys
 
         public void CreateLibraryVariableSets(int numberOfRecords, int numberOfVariablesPerRecord)
         {
+            var test = Repository.LibraryVariableSets.FindAll();
             var currentCount = Repository.LibraryVariableSets.FindAll().Count();
-            for (var x = currentCount; x <= numberOfRecords; x++)
+            for (var x = currentCount; x < numberOfRecords; x++)
             {
+                var offset = x * 100;
                 var libraryVariableSet = CreateLibraryVariableSet(x);
                 var variableSet = Repository.VariableSets.Get(libraryVariableSet.VariableSetId);
-                for (var y = variableSet.Variables.Count(); y <= numberOfVariablesPerRecord; y++)
+                for (var y = variableSet.Variables.Count(); y < numberOfVariablesPerRecord; y++)
                 {
-                    variableSet.AddOrUpdateVariableValue("VariableKey" + y.ToString("000"), "Hello sailor!");
+                    variableSet.AddOrUpdateVariableValue("VariableKey" + (offset + y).ToString("000"), "Hello sailor!");
                     variableSet = Repository.VariableSets.Modify(variableSet);
                 }
             }
@@ -93,6 +95,21 @@ namespace SeaMonkey.Monkeys
                 });
         }
 
+        //public void UpdateLibraryVariableSetVariableValues(int numberOfRecords, int numberOfVariablesPerRecord)
+        //{
+        //    for (var x = 0; x < numberOfRecords; x++)
+        //    {
+        //        var offset = x * 100;
+        //        var libraryVariableSet = Repository.LibraryVariableSets.FindByName("LibraryVariableSet-" + x.ToString("000"));
+        //        var variableSet = Repository.VariableSets.Get(libraryVariableSet.VariableSetId);
+        //        for (var y = 0; y < numberOfVariablesPerRecord; y++)
+        //        {
+        //            variableSet.AddOrUpdateVariableValue("VariableKey" + (offset + y).ToString("000"), "Hello sailor 6!");
+        //            variableSet = Repository.VariableSets.Modify(variableSet);
+        //        }
+        //    }
+        //}
+
         #endregion
 
         #region TenantTagSets
@@ -100,7 +117,7 @@ namespace SeaMonkey.Monkeys
         public void CreateTenantTagSets(int numberOfRecords)
         {
             var currentCount = Repository.TagSets.FindAll().Count();
-            for (var x = currentCount; x <= numberOfRecords; x++)
+            for (var x = currentCount; x < numberOfRecords; x++)
                 CreateTenantTagSet(x);
         }
 

@@ -27,7 +27,7 @@ namespace SeaMonkey.Monkeys
         public void CreateDisabledSubscriptions(int numberOfRecords)
         {
             var currentCount = Repository.Subscriptions.FindAll().Count();
-            for (var x = currentCount; x <= numberOfRecords; x++)
+            for (var x = currentCount; x < numberOfRecords; x++)
                 CreateDisabledSubscription(x);
         }
 
@@ -59,7 +59,7 @@ namespace SeaMonkey.Monkeys
         public void CreateEmptyTeams(int numberOfRecords)
         {
             var currentCount = Repository.Teams.FindAll().Count();
-            for (var x = currentCount; x <= numberOfRecords; x++)
+            for (var x = currentCount; x < numberOfRecords; x++)
                 CreateEmptyTeam(x);
         }
 
@@ -80,7 +80,7 @@ namespace SeaMonkey.Monkeys
         {
             var users = Repository.Users.FindAll();
             var currentCount = Repository.Users.FindAll().Count();
-            for (var x = currentCount; x <= numberOfRecords; x++)
+            for (var x = currentCount; x < numberOfRecords; x++)
                 CreateInactiveUser(x);
         }
 
@@ -105,7 +105,7 @@ namespace SeaMonkey.Monkeys
         public void CreateEmptyUserRoles(int numberOfRecords)
         {
             var currentCount = Repository.UserRoles.FindAll().Count();
-            for (var x = currentCount; x <= numberOfRecords; x++)
+            for (var x = currentCount; x < numberOfRecords; x++)
                 CreateEmptyUserRole(x);
         }
 

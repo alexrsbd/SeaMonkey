@@ -41,7 +41,7 @@ namespace SeaMonkey.Monkeys
         public void CreateMachinePolicies(int numberOfRecords)
         {
             var currentCount = Repository.MachinePolicies.FindAll().Count();
-            for (var x = currentCount; x <= numberOfRecords; x++)
+            for (var x = currentCount; x < numberOfRecords; x++)
                 CreateMachinePolicy(x);
         }
 
@@ -79,7 +79,7 @@ namespace SeaMonkey.Monkeys
         public void CreateProxies(int numberOfRecords)
         {
             var currentCount = Repository.Proxies.FindAll().Count();
-            for (var x = currentCount; x <= numberOfRecords; x++)
+            for (var x = currentCount; x < numberOfRecords; x++)
                 CreateProxy(x);
         }
 
@@ -101,7 +101,7 @@ namespace SeaMonkey.Monkeys
         public void CreateUsernamePasswordAccounts(int numberOfRecords)
         {
             var currentCount = Repository.Accounts.FindAll().Count();
-            for (var x = currentCount; x <= numberOfRecords; x++)
+            for (var x = currentCount; x < numberOfRecords; x++)
                 CreateUsernamePasswordAccount(x);
         }
 
@@ -148,14 +148,14 @@ namespace SeaMonkey.Monkeys
             {
                 machineResources.Add(CreateMachine(i));
             });
-            //for (var x = currentCount; x <= numberOfRecords; x++)
+            //for (var x = currentCount; x < numberOfRecords; x++)
             //    machineResources.Add(CreateMachine(x));
             
             Parallel.ForEach(machineResources, (machineResource, state, i) =>
             {
                 Repository.Machines.Create(machineResource);
             });
-            //for (var x = currentCount; x <= numberOfRecords; x++)
+            //for (var x = currentCount; x < numberOfRecords; x++)
             //    CreateMachine(x);
         }
 
