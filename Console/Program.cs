@@ -28,6 +28,7 @@ namespace SeaMonkey
             const bool runInfrastructureMonkey = false;
             const bool runLibraryMonkey = false;
             const bool runTenantMonkey = false;
+            const bool runVariablesMonkey = true;
 
             try
             {
@@ -44,7 +45,8 @@ namespace SeaMonkey
                     runConfigurationMonkey,
                     runInfrastructureMonkey,
                     runLibraryMonkey,
-                    runTenantMonkey);
+                    runTenantMonkey,
+                    runVariablesMonkey);
             }
             catch (Exception ex)
             {
@@ -63,7 +65,8 @@ namespace SeaMonkey
             bool runConfigurationMonkey,
             bool runInfrastructureMonkey,
             bool runLibraryMonkey,
-            bool runTenantMonkey)
+            bool runTenantMonkey, 
+            bool runVariablesMonkey)
         {
             Console.WriteLine("Starting monkey business...");
 
@@ -109,6 +112,14 @@ namespace SeaMonkey
                 Console.WriteLine("Running library monkey...");
                 new LibraryMonkey(repository)
                     .CreateRecords(70, 70, 10, 3, 70);
+            }
+
+            if (runVariablesMonkey)
+            {
+                Console.WriteLine("Running variables monkey...");
+                new VariablesMonkey(repository)
+                    .CreateVariables(3, 10, 50, 100, 200, 250, 300, 400, 500, 1000, 2000, 5000, 10000);
+                    //.CleanupVariables();
             }
         }
     }
