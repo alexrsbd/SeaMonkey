@@ -1,6 +1,8 @@
 # Sea Monkey 
 
-Sea Monkey is a simple but awesome tool to help populate an Octopus instane with a lot of test data.
+Sea Monkey is a simple but awesome tool to help populate an Octopus instance with a lot of test data.
+
+**WARNING: Only use this tool against test/development Octopus instances where you need to simulate load**
 
 To populate a bunch of test data, perform the following:
 
