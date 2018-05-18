@@ -6,29 +6,24 @@ using Serilog;
 
 namespace SeaMonkey
 {
-    class Program
+    internal class Program
     {
         public static readonly Random Rnd = new Random(235346798);
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            Random rnd = new Random();
-
             if (args.Length != 2)
-            {
                 throw new ApplicationException("Usage: SeaMonkey.exe <ServerUri> <ApiKey>");
-            }
 
             var server = args[0];
             var apikey = args[1];
-            //const string apikey = "API-GCCFRMSJ53TA9S9RN3SPW2UOPA8";
             const bool runSetupMonkey = false;
             const bool runDeployMonkey = false;
             const bool runConfigurationMonkey = false;
             const bool runInfrastructureMonkey = false;
             const bool runLibraryMonkey = false;
             const bool runTenantMonkey = false;
-            const bool runVariablesMonkey = true;
+            const bool runVariablesMonkey = false;
 
             try
             {
@@ -59,7 +54,7 @@ namespace SeaMonkey
             }
         }
 
-        static void RunMonkeys(OctopusRepository repository,
+        private static void RunMonkeys(OctopusRepository repository,
             bool runSetupMonkey,
             bool runDeployMonkey,
             bool runConfigurationMonkey,
@@ -114,6 +109,7 @@ namespace SeaMonkey
                     .CreateRecords(70, 70, 10, 3, 70);
             }
 
+            // ReSharper disable once InvertIf
             if (runVariablesMonkey)
             {
                 Console.WriteLine("Running variables monkey...");
