@@ -21,7 +21,7 @@ namespace SeaMonkey
             const bool runTenantMonkey = false;
             const bool runDeployMonkey = false;
             const bool runConfigurationMonkey = false;
-            const bool runInfrastructureMonkey = true;
+            const bool runInfrastructureMonkey = false;
             const bool runLibraryMonkey = false;
             const bool runVariablesMonkey = false;
 
@@ -84,7 +84,7 @@ namespace SeaMonkey
             {
                 Console.WriteLine("Running infrastructure monkey...");
                 new InfrastructureMonkey(repository)
-                    .CreateRecords(0, 0, 0, 0, 20, 40);
+                    .CreateRecords(7, 7, 7, 70, 2, 2);
             }
 
             if (runDeployMonkey)
