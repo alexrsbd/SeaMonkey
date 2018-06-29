@@ -18,11 +18,11 @@ namespace SeaMonkey
             var server = args[0];
             var apikey = args[1];
             const bool runSetupMonkey = false;
+            const bool runTenantMonkey = false;
             const bool runDeployMonkey = false;
             const bool runConfigurationMonkey = false;
-            const bool runInfrastructureMonkey = false;
+            const bool runInfrastructureMonkey = true;
             const bool runLibraryMonkey = false;
-            const bool runTenantMonkey = false;
             const bool runVariablesMonkey = false;
 
             try
@@ -77,7 +77,14 @@ namespace SeaMonkey
 
             if (runTenantMonkey)
             {
-                new TenantMonkey(repository).Create(100);
+                new TenantMonkey(repository).Create(200);
+            }
+
+            if (runInfrastructureMonkey)
+            {
+                Console.WriteLine("Running infrastructure monkey...");
+                new InfrastructureMonkey(repository)
+                    .CreateRecords(0, 0, 0, 0, 20, 40);
             }
 
             if (runDeployMonkey)
@@ -92,13 +99,6 @@ namespace SeaMonkey
             {
                 Console.WriteLine("Running configuration monkey...");
                 new ConfigurationMonkey(repository)
-                    .CreateRecords(70, 70, 70, 70);
-            }
-
-            if (runInfrastructureMonkey)
-            {
-                Console.WriteLine("Running infrastructure monkey...");
-                new InfrastructureMonkey(repository)
                     .CreateRecords(70, 70, 70, 70);
             }
 

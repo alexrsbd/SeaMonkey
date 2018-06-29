@@ -4,7 +4,6 @@ using Octopus.Client.Model;
 using Octopus.Client.Model.Accounts;
 using Octopus.Client.Model.Endpoints;
 using SeaMonkey.ProbabilitySets;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System;
@@ -14,12 +13,15 @@ namespace SeaMonkey.Monkeys
     public class InfrastructureMonkey : Monkey
     {
         private IntProbability RolesPerMachine { get; set; } = new LinearProbability(0, 4);
-        private string[] PossibleRoles = new string[] {
+        private readonly string[] PossibleRoles = new string[] {
             "Rick",
             "Morty",
             "Mr. Meeseeks",
             "Roy's Carpet Store",
+            "InstallStuff", // <- need to have this role somewhere for setup.
         };
+        const string WorkerPoolPrefix = "GarblovianWorkerPool-";
+        const string WorkerPrefix = "RickAndMortyWorker-";
 
         public InfrastructureMonkey(OctopusRepository repository) : base(repository)
         {
@@ -28,12 +30,15 @@ namespace SeaMonkey.Monkeys
         public void CreateRecords(int numberOfMachinePolicies,
             int numberOfProxies,
             int numberOfUsernamePasswords,
-            int numberOfMachines)
+            int numberOfMachines,
+            int numberOfWorkerPools,
+            int numberOfWorkersPerPool)
         {
             CreateMachinePolicies(numberOfMachinePolicies);
             CreateProxies(numberOfProxies);
             CreateUsernamePasswordAccounts(numberOfUsernamePasswords);
             CreateMachines(numberOfMachines);
+            CreateWorkersPoolsAndWorkers(numberOfWorkerPools, numberOfWorkersPerPool);
         }
 
         #region MachinePolicies
@@ -142,21 +147,15 @@ namespace SeaMonkey.Monkeys
         public void CreateMachines(int numberOfRecords)
         {
             var currentCount = Repository.Machines.FindAll().Count();
-
             var machineResources = new ConcurrentBag<MachineResource>();
             Parallel.For(currentCount, numberOfRecords, i =>
             {
                 machineResources.Add(CreateMachine(i));
             });
-            //for (var x = currentCount; x < numberOfRecords; x++)
-            //    machineResources.Add(CreateMachine(x));
-            
             Parallel.ForEach(machineResources, (machineResource, state, i) =>
             {
                 Repository.Machines.Create(machineResource);
             });
-            //for (var x = currentCount; x < numberOfRecords; x++)
-            //    CreateMachine(x);
         }
 
         private MachineResource CreateMachine(int prefix)
@@ -198,6 +197,65 @@ namespace SeaMonkey.Monkeys
             return machine;
 
             //return Repository.Machines.Create(machine);
+        }
+
+        #endregion
+
+        #region Workers
+
+        private void CreateWorkersPoolsAndWorkers(int numberOfWorkerPools, int numberOfWorkersPerPool)
+        {
+            // Setup worker pools first.
+            var currentPoolCount = Repository.WorkerPools.GetAll().Count(e => e.Name.Contains(WorkerPoolPrefix));
+            var poolResources = new ConcurrentBag<WorkerPoolResource>();
+            Parallel.For(currentPoolCount, numberOfWorkerPools, i =>
+            {
+                poolResources.Add(CreateWorkerPool(i));
+            });
+            Parallel.ForEach(poolResources, (poolResource, state, i) =>
+            {
+                Repository.WorkerPools.Create(poolResource);
+            });
+
+            // Setup workers for each pool.
+            var pools = Repository.WorkerPools.GetAll().Where(e => e.Name.Contains(WorkerPoolPrefix)).ToList();
+            foreach (var pool in pools)
+            {
+                var currentWorkerCount = Repository.Workers.FindAll().Count(e => e.WorkerPoolIds.Contains(pool.Id) && e.Name.Contains(WorkerPrefix));
+                var workerResources = new ConcurrentBag<WorkerResource>();
+                Parallel.For(currentWorkerCount, numberOfWorkersPerPool, i =>
+                {
+                    workerResources.Add(CreateWorker(pool.Id, i));
+                });
+                Parallel.ForEach(workerResources, (workerResource, state, i) =>
+                {
+                    Repository.Workers.Create(workerResource);
+                });
+            }
+        }
+
+        private static WorkerPoolResource CreateWorkerPool(int prefix)
+        {
+            var pool = new WorkerPoolResource()
+            {
+                Name = "GarblovianWorkerPool-" + Guid.NewGuid().ToString().Substring(0, 8) + "-" + prefix.ToString("000"),
+            };
+            return pool;
+        }
+
+        private static WorkerResource CreateWorker(string workerPoolId, int prefix)
+        {
+            var worker = new WorkerResource()
+            {
+                Name = WorkerPrefix + Guid.NewGuid().ToString().Substring(0, 8) + "-" + prefix.ToString("000"),
+                WorkerPoolIds = new ReferenceCollection(workerPoolId),
+                Endpoint = new ListeningTentacleEndpointResource()
+                {
+                    Uri = "https://localhost:10940", // TODO: pass these as optional params?
+                    Thumbprint = "62D0D4851EE3B94C5B4D221F5583577AB9DEC015", // TODO: pass these as optional params?
+                },
+            };
+            return worker;
         }
 
         #endregion

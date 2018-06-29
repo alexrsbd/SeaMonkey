@@ -67,9 +67,6 @@ namespace SeaMonkey.Monkeys
                 );
         }
 
-
-
-
         private void CreateChannels(ProjectResource project, LifecycleResource lifecycle)
         {
             var numberOfExtraChannels = ExtraChannelsPerProject.Get();
@@ -104,10 +101,13 @@ namespace SeaMonkey.Monkeys
             {
                 foreach (var env in envs)
                 {
-                    var machine = machines[Program.Rnd.Next(0, machines.Count)];
-                    Repository.Machines.Refresh(machine);
-                    machine.EnvironmentIds.Add(env.Id);
-                    Repository.Machines.Modify(machine);
+                    if (machines.Any())
+                    {
+                        var machine = machines[Program.Rnd.Next(0, machines.Count)];
+                        Repository.Machines.Refresh(machine);
+                        machine.EnvironmentIds.Add(env.Id);
+                        Repository.Machines.Modify(machine);
+                    }
                 }
             }
             return envs;
