@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using Octopus.Client;
 using Octopus.Client.Model;
-using Octopus.Client.Repositories;
 using SeaMonkey.ProbabilitySets;
 using Serilog;
 using Serilog.Events;

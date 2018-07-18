@@ -21,7 +21,7 @@ namespace SeaMonkey.Monkeys
         {
         }
 
-        public IntProbability ProjectsPerGroup { get; set; } = new LinearProbability(5, 15);
+        public IntProbability ProjectsPerGroup { get; set; } = new LinearProbability(10, 20);
         public IntProbability ExtraChannelsPerProject { get; set; } = new DiscretProbability(0, 1, 1, 5);
         public IntProbability EnvironmentsPerGroup { get; set; } = new FibonacciProbability();
 
@@ -106,10 +106,13 @@ namespace SeaMonkey.Monkeys
             {
                 foreach (var env in envs)
                 {
-                    var machine = machines[Program.Rnd.Next(0, machines.Count)];
-                    Repository.Machines.Refresh(machine);
-                    machine.EnvironmentIds.Add(env.Id);
-                    Repository.Machines.Modify(machine);
+                    if (machines.Any())
+                    {
+                        var machine = machines[Program.Rnd.Next(0, machines.Count)];
+                        Repository.Machines.Refresh(machine);
+                        machine.EnvironmentIds.Add(env.Id);
+                        Repository.Machines.Modify(machine);
+                    }
                 }
             }
             return envs;
@@ -139,8 +142,15 @@ namespace SeaMonkey.Monkeys
                 LifecycleId = lifecycle.Id,
             });
 
-            using(var ms = new MemoryStream(CreateLogo(project.Name, "monsterid")))
-                Repository.Projects.SetLogo(project, project.Name + ".png", ms);
+            try
+            {
+                using (var ms = new MemoryStream(CreateLogo(project.Name, "monsterid")))
+                    Repository.Projects.SetLogo(project, project.Name + ".png", ms);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to create logo for {project.Name}", ex);
+            }
 
             return project;
         }
@@ -151,7 +161,7 @@ namespace SeaMonkey.Monkeys
         /// <param name="name"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        private byte[] CreateLogo(string name, string type = "retro")
+        private static byte[] CreateLogo(string name, string type = "retro")
         {
             var hash = BitConverter.ToString(MD5.Create().ComputeHash(Encoding.ASCII.GetBytes(name))).Replace("-", "").ToLower();
 
