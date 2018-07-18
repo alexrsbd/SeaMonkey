@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Octopus.Client;
 using Octopus.Client.Model;
+using Polly;
 using SeaMonkey.ProbabilitySets;
 using Serilog;
 
@@ -15,6 +16,7 @@ namespace SeaMonkey.Monkeys
 
     public class SetupMonkey : Monkey
     {
+        private byte[] lastImage;
         public SetupMonkey(OctopusRepository repository) : base(repository)
         {
         }
@@ -67,9 +69,6 @@ namespace SeaMonkey.Monkeys
                 );
         }
 
-
-
-
         private void CreateChannels(ProjectResource project, LifecycleResource lifecycle)
         {
             var numberOfExtraChannels = ExtraChannelsPerProject.Get();
@@ -94,11 +93,14 @@ namespace SeaMonkey.Monkeys
             Enumerable.Range(1, envs.Length)
                 .AsParallel()
                 .ForAll(e =>
-                envs[e - 1] = Repository.Environments.Create(new EnvironmentResource()
                 {
-                    Name = $"Env-{prefix:000}-{e}"
-                })
-            );
+                    var name = $"Env-{prefix:000}-{e}";
+                    var envRes = Repository.Environments.FindByName(name);
+                    envs[e - 1] = envRes ?? Repository.Environments.Create(new EnvironmentResource()
+                    {
+                        Name = name
+                    });
+                });
 
             lock(this)
             {
@@ -154,7 +156,26 @@ namespace SeaMonkey.Monkeys
             var hash = BitConverter.ToString(MD5.Create().ComputeHash(Encoding.ASCII.GetBytes(name))).Replace("-", "").ToLower();
 
             using (var client = new HttpClient())
-                return client.GetByteArrayAsync($"https://www.gravatar.com/avatar/{hash}?s=256&d={type}&r=PG").Result;
+            {
+                byte[] image = lastImage;
+                Policy
+                    .Handle<Exception>()
+                    .WaitAndRetry(new[]
+                    {
+                        TimeSpan.FromSeconds(1),
+                        TimeSpan.FromSeconds(2),
+                        TimeSpan.FromSeconds(3)
+                    }, (exception, timeSpan) => image = lastImage)
+                    .Execute(() =>
+                    {
+                        image = client
+                                .GetByteArrayAsync($"https://www.gravatar.com/avatar/{hash}?s=256&d={type}&r=PG")
+                                .Result;
+                        lastImage = image;
+                    });
+                
+                return image;
+            }
         }
     }
 }

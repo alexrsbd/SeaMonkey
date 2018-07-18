@@ -14,6 +14,7 @@ namespace SeaMonkey.Monkeys
     public class InfrastructureMonkey : Monkey
     {
         private IntProbability RolesPerMachine { get; set; } = new LinearProbability(0, 4);
+        public IntProbability EnvironmentsPerGroup { get; set; } = new FibonacciProbability();
         private string[] PossibleRoles = new string[] {
             "Rick",
             "Morty",
@@ -30,6 +31,7 @@ namespace SeaMonkey.Monkeys
             int numberOfUsernamePasswords,
             int numberOfMachines)
         {
+            CreateEnvironments(0);
             CreateMachinePolicies(numberOfMachinePolicies);
             CreateProxies(numberOfProxies);
             CreateUsernamePasswordAccounts(numberOfUsernamePasswords);
@@ -198,6 +200,23 @@ namespace SeaMonkey.Monkeys
             return machine;
 
             //return Repository.Machines.Create(machine);
+        }
+
+        private EnvironmentResource[] CreateEnvironments(int prefix)
+        {
+            var envs = new EnvironmentResource[EnvironmentsPerGroup.Get()];
+            Enumerable.Range(1, envs.Length)
+                .AsParallel()
+                .ForAll(e =>
+                {
+                    var name = $"Env-{prefix:000}-{e}";
+                    var envRes = Repository.Environments.FindByName(name);
+                    envs[e - 1] = envRes ?? Repository.Environments.Create(new EnvironmentResource()
+                    {
+                        Name = name
+                    });
+                });
+            return envs;
         }
 
         #endregion
