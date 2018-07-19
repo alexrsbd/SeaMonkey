@@ -16,7 +16,7 @@ namespace SeaMonkey.Monkeys
 
     public class SetupMonkey : Monkey
     {
-        private byte[] lastImage;
+        private static byte[] lastImage;
         public SetupMonkey(OctopusRepository repository) : base(repository)
         {
         }
