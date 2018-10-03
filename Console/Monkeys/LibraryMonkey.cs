@@ -1,4 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 using Octopus.Client;
 using Octopus.Client.Model;
 
@@ -14,12 +18,14 @@ namespace SeaMonkey.Monkeys
             int numberOfScriptModules,
             int numberOfLibraryVariableSets,
             int numberOfLibraryVariableVariables,
-            int numberOfTenantTagSets)
+            int numberOfTenantTagSets,
+            int numberOfCertificates)
         {
             CreateFeeds(numberOfFeeds);
             CreateScriptModules(numberOfScriptModules);
             CreateLibraryVariableSets(numberOfLibraryVariableSets, numberOfLibraryVariableVariables);
             CreateTenantTagSets(numberOfTenantTagSets);
+            CreateCertificates(numberOfCertificates);
         }
 
         #region Feeds
@@ -85,6 +91,22 @@ namespace SeaMonkey.Monkeys
             }
         }
 
+        public void CreateCertificates(int numberOfRecords)
+        {
+            var count = Repository.Certificates.FindAll().Count();
+            for (var i = count; i < numberOfRecords; i++)
+            {
+                CreateCertificate(i);
+            }   
+        }
+
+        private CertificateResource CreateCertificate(int prefix)
+        {
+            var data = Utils.ReadFileBinary(() => GetType().Assembly.GetManifestResourceStream("SeaMonkey.Monkeys.pickle-rick.pfx"));
+            return Repository.Certificates.Create(new CertificateResource("Pickle-Cert" + prefix.ToString("000"), Convert.ToBase64String(data), "Morty"));
+            
+        }
+
         private LibraryVariableSetResource CreateLibraryVariableSet(int prefix)
         {
             return
@@ -134,4 +156,20 @@ namespace SeaMonkey.Monkeys
         #endregion
 
     }
+
+    public static class Utils
+    {
+
+        public static byte[] ReadFileBinary(Func<Stream> factory)
+        {
+            var buffer = new MemoryStream();
+
+            using (var stream = factory())
+            {
+                stream.CopyTo(buffer);
+                return buffer.ToArray();
+            }
+        } 
+    }
+
 }
