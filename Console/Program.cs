@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Octopus.Client;
 using SeaMonkey.Monkeys;
 using SeaMonkey.ProbabilitySets;
@@ -106,7 +107,7 @@ namespace SeaMonkey
             {
                 Console.WriteLine("Running library monkey...");
                 new LibraryMonkey(repository)
-                    .CreateRecords(70, 70, 10, 3, 70);
+                    .CreateRecords(70, 70, 10, 3, 70, 50);
             }
 
             // ReSharper disable once InvertIf

@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <EmbeddedResource Include="Monkeys\pickle-rick.pfx" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
