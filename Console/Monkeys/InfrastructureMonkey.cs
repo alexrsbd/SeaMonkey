@@ -36,7 +36,7 @@ namespace SeaMonkey.Monkeys
             int numberOfWorkersPerPool)
         {
             CreateEnvironments(0);
-            CreateMachinePolicies(numberOfMachinePolicies);
+            //CreateMachinePolicies(numberOfMachinePolicies);
             CreateProxies(numberOfProxies);
             CreateUsernamePasswordAccounts(numberOfUsernamePasswords);
             CreateMachines(numberOfMachines);

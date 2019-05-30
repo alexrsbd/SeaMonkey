@@ -142,15 +142,15 @@ namespace SeaMonkey.Monkeys
                 LifecycleId = lifecycle.Id,
             });
 
-            try
-            {
-                using (var ms = new MemoryStream(CreateLogo(project.Name, "monsterid")))
-                    Repository.Projects.SetLogo(project, project.Name + ".png", ms);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to create logo for {project.Name}", ex);
-            }
+            //try
+            //{
+            //    using (var ms = new MemoryStream(CreateLogo(project.Name, "monsterid")))
+            //        Repository.Projects.SetLogo(project, project.Name + ".png", ms);
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine($"Failed to create logo for {project.Name}", ex);
+            //}
 
             return project;
         }

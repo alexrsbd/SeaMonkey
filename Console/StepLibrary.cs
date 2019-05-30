@@ -7,8 +7,8 @@ namespace SeaMonkey
     {
         public static readonly Func<int, DeploymentStepResource>[] StepFactories = {
             GetSimpleScriptStep,
-            GetPackageDeploymentStep,
-            GetLargeStep
+            //GetPackageDeploymentStep,
+            //GetLargeStep
         };
 
         private static DeploymentStepResource GetSimpleScriptStep(int id)

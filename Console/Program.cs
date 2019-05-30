@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Octopus.Client;
 using SeaMonkey.Monkeys;
 using SeaMonkey.ProbabilitySets;
@@ -13,18 +12,18 @@ namespace SeaMonkey
 
         private static void Main(string[] args)
         {
-            if (args.Length != 2)
-                throw new ApplicationException("Usage: SeaMonkey.exe <ServerUri> <ApiKey>");
+            if (args.Length != 9)
+                throw new ApplicationException("Usage: SeaMonkey.exe <ServerUri> <ApiKey> <RunSetupMonkey> <RunTenantMonkey> <RunDeployMonkey> <RunConfigurationMonkey> <RunInfrastructureMonkey> <RunLibraryMonkey> <RunVariablesMonkey>");
 
             var server = args[0];
-            var apikey = args[1];
-            const bool runSetupMonkey = false;
-            const bool runTenantMonkey = false;
-            const bool runDeployMonkey = false;
-            const bool runConfigurationMonkey = false;
-            const bool runInfrastructureMonkey = false;
-            const bool runLibraryMonkey = false;
-            const bool runVariablesMonkey = false;
+            var apiKey = args[1];
+            var runSetupMonkey = args[2].ToLower() == "true";
+            var runTenantMonkey = args[3].ToLower() == "true";
+            var runDeployMonkey = args[4].ToLower() == "true";
+            var runConfigurationMonkey = args[5].ToLower() == "true";
+            var runInfrastructureMonkey = args[6].ToLower() == "true";
+            var runLibraryMonkey = args[7].ToLower() == "true";
+            var runVariablesMonkey = args[8].ToLower() == "true";
 
             try
             {
@@ -33,7 +32,7 @@ namespace SeaMonkey
                     .WriteTo.ColoredConsole()
                     .CreateLogger();
 
-                var endpoint = new OctopusServerEndpoint(server, apikey);
+                var endpoint = new OctopusServerEndpoint(server, apiKey);
                 var repository = new OctopusRepository(endpoint);
                 RunMonkeys(repository,
                     runSetupMonkey,
@@ -78,7 +77,7 @@ namespace SeaMonkey
 
             if (runTenantMonkey)
             {
-                new TenantMonkey(repository).Create(200);
+                new TenantMonkey(repository).Create(50);
             }
 
             if (runInfrastructureMonkey)
@@ -115,7 +114,7 @@ namespace SeaMonkey
             {
                 Console.WriteLine("Running variables monkey...");
                 new VariablesMonkey(repository)
-                    .CreateVariables(3, 10, 50, 100, 200, 250, 300, 400, 500, 1000, 2000, 5000, 10000);
+                    .CreateVariables(3, 10, 50, 100, 200);
                     //.CleanupVariables();
             }
         }

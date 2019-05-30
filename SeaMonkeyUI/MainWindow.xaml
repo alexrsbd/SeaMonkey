@@ -1,0 +1,28 @@
+﻿<Window x:Class="SeaMonkeyUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SeaMonkeyUI"
+        mc:Ignorable="d"
+        Title="SeaMonkey" Height="450" Width="700
+        ">
+    <Grid>
+        <StackPanel HorizontalAlignment="Left" Height="400" Margin="100,10,0,0" VerticalAlignment="Top" Width="500" Grid.ColumnSpan="2">
+            <Label Content="Server URL" Margin="0,0,-0.333,0" Foreground="#FF2F93E0"/>
+            <TextBox x:Name="txtServer" Height="30" TextWrapping="Wrap" Margin="0,0,-0.333,0" FontSize="16" TextChanged="TxtServer_TextChanged"/>
+            <Label Content="API Key" Margin="0,0,-0.333,0" Foreground="#FF2F93E0"/>
+            <TextBox x:Name="txtApiKey" Height="30" TextWrapping="Wrap" FontSize="16" TextChanged="TxtApiKey_TextChanged"/>
+            <Label Content="Options" Margin="0,0,-0.333,0" Foreground="#FF2F93E0"/>
+            <CheckBox x:Name="runSetup" Content="Run Setup Monkey" FontSize="16" Height="20" Margin="0,4" Checked="RunSetup_Checked"/>
+            <CheckBox x:Name="runTenant" Content="Run Tenant Monkey" FontSize="16" Height="20" Margin="0,4" Checked="RunTenant_Checked"/>
+            <CheckBox x:Name="runDeploy" Content="Run Deploy Monkey" Margin="0,4,-0.333,4" FontSize="16" Height="20" Checked="RunDeploy_Checked"/>
+            <CheckBox x:Name="runConfiguration" Content="Run Configuration Monkey" FontSize="16" Height="20" Margin="0,4" Checked="RunConfiguration_Checked"/>
+            <CheckBox x:Name="runInfrastructure" Content="Run Infrastructure Monkey" FontSize="16" Height="20" Margin="0,4" Checked="RunInfrastructure_Checked"/>
+            <CheckBox x:Name="runLibrary" Content="Run Library Monkey" FontSize="16" Height="20" Margin="0,4" Checked="RunLibrary_Checked"/>
+            <CheckBox x:Name="runVariables" Content="Run Variables Monkey" FontSize="16" Height="20" Margin="0,4" Checked="RunVariables_Checked"/>
+            <Button x:Name="btnSubmit" Content="Run" IsDefault="True" Height="30" Background="#FF48B350" Foreground="White" FontSize="16" Click="BtnSubmit_Click"/>
+        </StackPanel>
+
+    </Grid>
+</Window>
