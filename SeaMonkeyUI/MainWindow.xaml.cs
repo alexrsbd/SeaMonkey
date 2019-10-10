@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -147,7 +148,7 @@ namespace SeaMonkeyUI
         private static string GetSeaMonkeyConsoleExePath()
         {
             // TODO: Hacky for now, but does the job.
-            return "../../../Console/bin/Debug";
+            return Path.GetFullPath("../../../../Console/bin/Debug/net472");
 
             //var assembly = // System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
             //if (assembly == null) {
