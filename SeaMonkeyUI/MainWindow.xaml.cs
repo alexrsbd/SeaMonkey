@@ -73,7 +73,7 @@ namespace SeaMonkeyUI
         {
             var startInfo = new ProcessStartInfo("dotnet")
             {
-                WorkingDirectory = GetSeaMonkeyConsoleExePath(),
+                WorkingDirectory = GetSeaMonkeyConsolePath(),
                 Arguments = $"SeaMonkey.dll {this.Model.ServerUrl} {this.Model.ServerApiKey} {this.Model.RunSetupMonkey} {this.Model.RunTenantMonkey} {this.Model.RunDeployMonkey} {this.Model.RunConfigurationMonkey} {this.Model.RunInfrastructureMonkey} {this.Model.RunLibraryMonkey} {this.Model.RunVariableMonkey}"
             };
             using (ConsoleProcess = Process.Start(startInfo))
@@ -145,18 +145,10 @@ namespace SeaMonkeyUI
             public bool RunVariableMonkey { get; set; }
         }
 
-        private static string GetSeaMonkeyConsoleExePath()
+        private static string GetSeaMonkeyConsolePath()
         {
             // TODO: Hacky for now, but does the job.
             return Path.GetFullPath("../../../../Console/bin/Debug/netcoreapp3.0");
-
-            //var assembly = // System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
-            //if (assembly == null) {
-            //    return null;
-            //}
-            //// Strip file:// from start.
-            //assembly = assembly.Substring(6);
-            //return assembly;
         }
 
         #endregion
