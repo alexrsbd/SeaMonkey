@@ -36,7 +36,7 @@ namespace SeaMonkey.Monkeys
             int numberOfWorkersPerPool)
         {
             CreateEnvironments(0);
-            //CreateMachinePolicies(numberOfMachinePolicies);
+            CreateMachinePolicies(numberOfMachinePolicies);
             CreateProxies(numberOfProxies);
             CreateUsernamePasswordAccounts(numberOfUsernamePasswords);
             CreateMachines(numberOfMachines);
@@ -75,9 +75,15 @@ namespace SeaMonkey.Monkeys
                     MachineUpdatePolicy = new MachineUpdatePolicy
                     {
 
-                    }
-                });
-    }
+                    },
+                    PollingRequestQueueTimeout = new TimeSpan(1,0,0),
+                    PollingRequestMaximumMessageProcessingTimeout = new TimeSpan(1, 0, 0),
+                    ConnectionRetrySleepInterval = new TimeSpan(1, 0, 0),
+                    ConnectionRetryCountLimit = 3,
+                    ConnectionRetryTimeLimit = new TimeSpan(1, 0, 0),
+                    ConnectionConnectTimeout = new TimeSpan(1, 0, 0),
+            });
+        }
 
         #endregion
 
