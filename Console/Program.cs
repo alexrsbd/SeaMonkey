@@ -1,5 +1,6 @@
 ﻿using System;
 using Octopus.Client;
+using Octopus.Shared.Internals.Options;
 using SeaMonkey.Monkeys;
 using SeaMonkey.ProbabilitySets;
 using Serilog;
@@ -12,18 +13,56 @@ namespace SeaMonkey
 
         private static void Main(string[] args)
         {
-            if (args.Length != 9)
-                throw new ApplicationException("Usage: SeaMonkey.exe <ServerUri> <ApiKey> <RunSetupMonkey> <RunTenantMonkey> <RunDeployMonkey> <RunConfigurationMonkey> <RunInfrastructureMonkey> <RunLibraryMonkey> <RunVariablesMonkey>");
+            var server = string.Empty;
+            var apiKey = string.Empty;
+            var runSetupMonkey = false;
+            var runTenantMonkey = false;
+            var runDeployMonkey = false;
+            var runConfigurationMonkey = false;
+            var runInfrastructureMonkey = false;
+            var runLibraryMonkey = false;
+            var runVariablesMonkey = false;
 
-            var server = args[0];
-            var apiKey = args[1];
-            var runSetupMonkey = args[2].ToLower() == "true";
-            var runTenantMonkey = args[3].ToLower() == "true";
-            var runDeployMonkey = args[4].ToLower() == "true";
-            var runConfigurationMonkey = args[5].ToLower() == "true";
-            var runInfrastructureMonkey = args[6].ToLower() == "true";
-            var runLibraryMonkey = args[7].ToLower() == "true";
-            var runVariablesMonkey = args[8].ToLower() == "true";
+            try
+            {
+                var options = new OptionSet();
+                options.Add<string>("server=", "The Octopus Server URI, E.g. http://localhost:8065", e => server = e);
+                options.Add<string>("apiKey=", "The Octopus API key, E.g. API-1234", e => apiKey = e);
+                options.Add<string>("runSetupMonkey", "", e => runSetupMonkey = true);
+                options.Add<string>("runTenantMonkey", "", e => runTenantMonkey = true);
+                options.Add<string>("runDeployMonkey", "", e => runDeployMonkey = true);
+                options.Add<string>("runConfigurationMonkey", "", e => runConfigurationMonkey = true);
+                options.Add<string>("runInfrastructureMonkey", "", e => runInfrastructureMonkey = true);
+                options.Add<string>("runLibraryMonkey", "", e => runLibraryMonkey = true);
+                options.Add<string>("runVariablesMonkey", "", e => runVariablesMonkey = true);
+
+                if (args.Length == 0)
+                    throw new ApplicationException(
+                        "No arguments specified. Please provide a server, apiKey and some monkeys you wish to run. E.g. SeaMonkey.exe --server=http://localhost:8065 --apiKey=API-1234 --runConfigurationMonkey --runLibraryMonkey");
+
+                options.Parse(args);
+
+                if (string.IsNullOrWhiteSpace(server))
+                    throw new ApplicationException(
+                        "No server specified. Please use the --server parameter to specify an Octopus server instance.");
+                if (string.IsNullOrWhiteSpace(apiKey))
+                    throw new ApplicationException(
+                        "No apiKey specified. Please use the --apiKey parameter to specify an Octopus API key.");
+
+                var atLeastOneMonkeySpecified = runSetupMonkey || runTenantMonkey || runDeployMonkey ||
+                                                runConfigurationMonkey || runInfrastructureMonkey || runLibraryMonkey ||
+                                                runVariablesMonkey;
+                if (!atLeastOneMonkeySpecified)
+                    throw new ApplicationException(
+                        "No monkeys were specified. Please use one of the following flags to run a monkey: --runSetupMonkey --runTenantMonkey --runDeployMonkey --runConfigurationMonkey --runInfrastructureMonkey --runLibraryMonkey --runVariablesMonkey");
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Error.WriteLine(ex.Message);
+                Console.ResetColor();
+                return;
+            }
 
             try
             {
