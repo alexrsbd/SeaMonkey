@@ -110,7 +110,7 @@ namespace SeaMonkey
                 //new SetupMonkey(repository).CreateTenants(500);
                 new SetupMonkey(repository)
                 {
-                    StepsPerProject = new LinearProbability(1, 1)
+                    StepsPerProject = new LinearProbability(1, 3)
                 }.CreateProjectGroups(10);
             }
 

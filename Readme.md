@@ -1,4 +1,4 @@
-# Sea Monkey 
+# Sea Monkey
 
 Sea Monkey is a simple but awesome tool to help populate an Octopus instance with a lot of test data.
 
@@ -6,8 +6,20 @@ Sea Monkey is a simple but awesome tool to help populate an Octopus instance wit
 
 To populate a bunch of test data, perform the following:
 
-* Open the solution and build the solution.
-* Launch your favourite console app/command prompt and navigate to the project's `bin/debug` folder.
-* Execute `dotnet SeaMonkey.dll "https://myserver/" "API-ABCD123456890THISISAWESOME" true true true true true true true` at a Windows command prompt replacing the server and API keys with your own values.
+- Open the solution and build the solution.
+- Launch your favourite console app/command prompt and navigate to the project's `bin/debug/netcoreapp...` folder.
+- Execute `.\SeaMonkey.exe --server=http://localhost:8065 --apiKey=API-1234` at a Windows command prompt, replacing the server and apiKey with your own values, and your choice of monkey runners:
+  - --runSetupMonkey
+  - --runTenantMonkey
+  - --runDeployMonkey
+  - --runConfigurationMonkey
+  - --runInfrastructureMonkey
+  - --runLibraryMonkey
+  - --runVariablesMonkey
+
+E.g. Running the library monkey:
+```
+PS Z:\development\SeaMonkey\Console\bin\Debug\netcoreapp3.0> .\SeaMonkey.exe --server=http://localhost:8065 --apiKey=API-1234 --runLibraryMonkey
+```
 
 NOTE: You'll likely need to update the `Octopus.Client` NuGet package dependency.

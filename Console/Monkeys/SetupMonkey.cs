@@ -21,7 +21,7 @@ namespace SeaMonkey.Monkeys
         {
         }
 
-        public IntProbability ProjectsPerGroup { get; set; } = new LinearProbability(50, 100);
+        public IntProbability ProjectsPerGroup { get; set; } = new LinearProbability(10, 20);
         public IntProbability ExtraChannelsPerProject { get; set; } = new DiscretProbability(0, 1, 1, 5);
         public IntProbability EnvironmentsPerGroup { get; set; } = new FibonacciProbability();
 
