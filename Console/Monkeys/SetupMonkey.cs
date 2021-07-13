@@ -25,12 +25,16 @@ namespace SeaMonkey.Monkeys
         public IntProbability ExtraChannelsPerProject { get; set; } = new DiscretProbability(0, 1, 1, 5);
         public IntProbability EnvironmentsPerGroup { get; set; } = new FibonacciProbability();
 
-        public void CreateProjectGroups(int numberOfGroups)
+        public void CreateProjectGroups(int numberOfRecords)
         {
+            Log.Information("Creating {n} project groups", numberOfRecords);
+
             var machines = GetMachines();
             var currentCount = Repository.ProjectGroups.FindAll().Count();
-            for (var x = currentCount; x <= numberOfGroups; x++)
-                Create(x, machines);
+
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => Create(i, machines));
         }
 
         private void Create(int id, IReadOnlyList<MachineResource> machines)

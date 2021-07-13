@@ -1,10 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using Octopus.Client;
 using Octopus.Client.Model;
+using Serilog;
 
 namespace SeaMonkey.Monkeys
 {
@@ -32,9 +31,11 @@ namespace SeaMonkey.Monkeys
 
         public void CreateFeeds(int numberOfRecords)
         {
+            Log.Information("Creating {n} feeds", numberOfRecords);
             var currentCount = Repository.Feeds.FindAll().Count();
-            for (var x = currentCount; x < numberOfRecords; x++)
-                CreateFeed(x);
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => CreateFeed(i));
         }
 
         private FeedResource CreateFeed(int prefix)
@@ -53,9 +54,11 @@ namespace SeaMonkey.Monkeys
 
         public void CreateScriptModules(int numberOfRecords)
         {
+            Log.Information("Creating {n} script modules", numberOfRecords);
             var currentCount = Repository.LibraryVariableSets.FindAll().Count();
-            for (var x = currentCount; x < numberOfRecords; x++)
-                CreateScriptModule(x);
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => CreateScriptModule(i));
         }
 
         private LibraryVariableSetResource CreateScriptModule(int prefix)
@@ -76,35 +79,38 @@ namespace SeaMonkey.Monkeys
 
         public void CreateLibraryVariableSets(int numberOfRecords, int numberOfVariablesPerRecord)
         {
-            var test = Repository.LibraryVariableSets.FindAll();
+            Log.Information("Creating {n} library variable sets", numberOfRecords);
             var currentCount = Repository.LibraryVariableSets.FindAll().Count();
-            for (var x = currentCount; x < numberOfRecords; x++)
-            {
-                var offset = x * 100;
-                var libraryVariableSet = CreateLibraryVariableSet(x);
-                var variableSet = Repository.VariableSets.Get(libraryVariableSet.VariableSetId);
-                for (var y = variableSet.Variables.Count(); y < numberOfVariablesPerRecord; y++)
-                {
-                    variableSet.AddOrUpdateVariableValue("VariableKey" + (offset + y).ToString("000"), "Hello sailor!");
-                    variableSet = Repository.VariableSets.Modify(variableSet);
-                }
-            }
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i =>
+                    {
+                        var offset = i * 100;
+                        var libraryVariableSet = CreateLibraryVariableSet(i);
+                        var variableSet = Repository.VariableSets.Get(libraryVariableSet.VariableSetId);
+                        for (var y = variableSet.Variables.Count(); y < numberOfVariablesPerRecord; y++)
+                        {
+                            variableSet.AddOrUpdateVariableValue("VariableKey" + (offset + y).ToString("000"), "Hello sailor!");
+                            variableSet = Repository.VariableSets.Modify(variableSet);
+                        }
+                    }
+                );
         }
 
         public void CreateCertificates(int numberOfRecords)
         {
-            var count = Repository.Certificates.FindAll().Count();
-            for (var i = count; i < numberOfRecords; i++)
-            {
-                CreateCertificate(i);
-            }   
+            Log.Information("Creating {n} certificates", numberOfRecords);
+            var currentCount = Repository.Certificates.FindAll().Count();
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => CreateCertificate(i));
         }
 
         private CertificateResource CreateCertificate(int prefix)
         {
             var data = Utils.ReadFileBinary(() => GetType().Assembly.GetManifestResourceStream("SeaMonkey.Monkeys.pickle-rick.pfx"));
             return Repository.Certificates.Create(new CertificateResource("Pickle-Cert" + prefix.ToString("000"), Convert.ToBase64String(data), "Morty"));
-            
+
         }
 
         private LibraryVariableSetResource CreateLibraryVariableSet(int prefix)
@@ -117,30 +123,17 @@ namespace SeaMonkey.Monkeys
                 });
         }
 
-        //public void UpdateLibraryVariableSetVariableValues(int numberOfRecords, int numberOfVariablesPerRecord)
-        //{
-        //    for (var x = 0; x < numberOfRecords; x++)
-        //    {
-        //        var offset = x * 100;
-        //        var libraryVariableSet = Repository.LibraryVariableSets.FindByName("LibraryVariableSet-" + x.ToString("000"));
-        //        var variableSet = Repository.VariableSets.Get(libraryVariableSet.VariableSetId);
-        //        for (var y = 0; y < numberOfVariablesPerRecord; y++)
-        //        {
-        //            variableSet.AddOrUpdateVariableValue("VariableKey" + (offset + y).ToString("000"), "Hello sailor 6!");
-        //            variableSet = Repository.VariableSets.Modify(variableSet);
-        //        }
-        //    }
-        //}
-
         #endregion
 
         #region TenantTagSets
 
         public void CreateTenantTagSets(int numberOfRecords)
         {
+            Log.Information("Creating {n} tenant tags", numberOfRecords);
             var currentCount = Repository.TagSets.FindAll().Count();
-            for (var x = currentCount; x < numberOfRecords; x++)
-                CreateTenantTagSet(x);
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => CreateTenantTagSet(i));
         }
 
         private TagSetResource CreateTenantTagSet(int prefix)
@@ -169,7 +162,6 @@ namespace SeaMonkey.Monkeys
                 stream.CopyTo(buffer);
                 return buffer.ToArray();
             }
-        } 
+        }
     }
-
 }

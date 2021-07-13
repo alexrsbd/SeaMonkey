@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using Octopus.Client;
 using Octopus.Client.Model;
+using Polly;
 using SeaMonkey.ProbabilitySets;
 using Serilog;
 
@@ -10,6 +14,8 @@ namespace SeaMonkey.Monkeys
 {
     public class TenantMonkey : Monkey
     {
+        private static byte[] lastImage;
+
         public TenantMonkey(OctopusRepository repository) : base(repository)
         {
         }
@@ -21,16 +27,57 @@ namespace SeaMonkey.Monkeys
         public IntProbability EnvironmentsPerProjectLink { get; set; } = new LinearProbability(0, 4);
 
 
-        public void Create(int numberOfTenants)
+        public void Create(int numberOfRecords)
         {
             var projects = GetProjects();
             var lifecycleIndex = Repository.Lifecycles.FindAll().ToDictionary(t => t.Id);
 
-            Log.Information("Creating {n} tenants", numberOfTenants);
+            Log.Information("Creating {n} tenants", numberOfRecords);
 
-            for (var t = 1; t <= numberOfTenants; t++)
+            Enumerable.Range(1, numberOfRecords)
+                .AsParallel()
+                .ForAll(i =>
+                    {
+                        CreateTenant(projects, lifecycleIndex, i);
+
+                        //try
+                        //{
+                        //    using (var ms = new MemoryStream(CreateLogo(project.Name, "monsterid")))
+                        //        Repository.Projects.SetLogo(project, project.Name + ".png", ms);
+                        //}
+                        //catch (Exception ex)
+                        //{
+                        //    Console.WriteLine($"Failed to create logo for {project.Name}", ex);
+                        //}
+                    }
+                );
+        }
+
+
+        private static byte[] CreateLogo(string name, string type = "retro")
+        {
+            var hash = BitConverter.ToString(MD5.Create().ComputeHash(Encoding.ASCII.GetBytes(name))).Replace("-", "").ToLower();
+
+            using (var client = new HttpClient())
             {
-                CreateTenant(projects, lifecycleIndex, t);
+                byte[] image = lastImage;
+                Policy
+                    .Handle<Exception>()
+                    .WaitAndRetry(new[]
+                    {
+                        TimeSpan.FromSeconds(1),
+                        TimeSpan.FromSeconds(2),
+                        TimeSpan.FromSeconds(3)
+                    }, (exception, timeSpan) => image = lastImage)
+                    .Execute(() =>
+                    {
+                        image = client
+                            .GetByteArrayAsync($"https://www.gravatar.com/avatar/{hash}?s=256&d={type}&r=PG")
+                            .Result;
+                        lastImage = image;
+                    });
+
+                return image;
             }
         }
 
@@ -68,8 +115,7 @@ namespace SeaMonkey.Monkeys
 
         private void EnsureProjectsTenanted(List<ProjectResource> projects)
         {
-            foreach (var untenantedProject in projects.Where(p => p.TenantedDeploymentMode == TenantedDeploymentMode.Untenanted)
-            )
+            foreach (var untenantedProject in projects.Where(p => p.TenantedDeploymentMode == TenantedDeploymentMode.Untenanted))
             {
                 untenantedProject.TenantedDeploymentMode = TenantedDeploymentMode.TenantedOrUntenanted;
                 Repository.Projects.Modify(untenantedProject);

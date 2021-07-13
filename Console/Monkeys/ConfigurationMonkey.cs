@@ -3,6 +3,7 @@ using Octopus.Client;
 using Octopus.Client.Model;
 using System;
 using System.Collections.Generic;
+using Serilog;
 
 namespace SeaMonkey.Monkeys
 {
@@ -27,9 +28,11 @@ namespace SeaMonkey.Monkeys
 
         public void CreateDisabledSubscriptions(int numberOfRecords)
         {
+            Log.Information("Creating {n} disabled subscriptions", numberOfRecords);
             var currentCount = Repository.Subscriptions.FindAll().Count();
-            for (var x = currentCount; x < numberOfRecords; x++)
-                CreateDisabledSubscription(x);
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => CreateDisabledSubscription(i));
         }
 
         private SubscriptionResource CreateDisabledSubscription(int prefix)
@@ -59,9 +62,11 @@ namespace SeaMonkey.Monkeys
 
         public void CreateEmptyTeams(int numberOfRecords)
         {
+            Log.Information("Creating {n} empty teams", numberOfRecords);
             var currentCount = Repository.Teams.FindAll().Count();
-            for (var x = currentCount; x < numberOfRecords; x++)
-                CreateEmptyTeam(x);
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => CreateEmptyTeam(i));
         }
 
         private TeamResource CreateEmptyTeam(int prefix)
@@ -79,10 +84,12 @@ namespace SeaMonkey.Monkeys
 
         public void CreateInactiveUsers(int numberOfRecords)
         {
+            Log.Information("Creating {n} inactive users", numberOfRecords);
             var users = Repository.Users.FindAll();
             var currentCount = Repository.Users.FindAll().Count();
-            for (var x = currentCount; x < numberOfRecords; x++)
-                CreateInactiveUser(x);
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => CreateInactiveUser(i));
         }
 
         private UserResource CreateInactiveUser(int prefix)
@@ -105,9 +112,11 @@ namespace SeaMonkey.Monkeys
 
         public void CreateEmptyUserRoles(int numberOfRecords)
         {
+            Log.Information("Creating {n} roles", numberOfRecords);
             var currentCount = Repository.UserRoles.FindAll().Count();
-            for (var x = currentCount; x < numberOfRecords; x++)
-                CreateEmptyUserRole(x);
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => CreateEmptyUserRole(i));
         }
 
         private UserRoleResource CreateEmptyUserRole(int prefix)

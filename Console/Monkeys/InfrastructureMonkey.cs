@@ -7,6 +7,7 @@ using SeaMonkey.ProbabilitySets;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System;
+using Serilog;
 
 namespace SeaMonkey.Monkeys
 {
@@ -47,9 +48,11 @@ namespace SeaMonkey.Monkeys
 
         public void CreateMachinePolicies(int numberOfRecords)
         {
+            Log.Information("Creating {n} machine policies", numberOfRecords);
             var currentCount = Repository.MachinePolicies.FindAll().Count();
-            for (var x = currentCount; x < numberOfRecords; x++)
-                CreateMachinePolicy(x);
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => CreateMachinePolicy(i));
         }
 
         private MachinePolicyResource CreateMachinePolicy(int prefix)
@@ -91,9 +94,11 @@ namespace SeaMonkey.Monkeys
 
         public void CreateProxies(int numberOfRecords)
         {
+            Log.Information("Creating {n} proxies", numberOfRecords);
             var currentCount = Repository.Proxies.FindAll().Count();
-            for (var x = currentCount; x < numberOfRecords; x++)
-                CreateProxy(x);
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => CreateProxy(i));
         }
 
         private ProxyResource CreateProxy(int prefix)
@@ -113,9 +118,11 @@ namespace SeaMonkey.Monkeys
 
         public void CreateUsernamePasswordAccounts(int numberOfRecords)
         {
+            Log.Information("Creating {n} username/password accounts", numberOfRecords);
             var currentCount = Repository.Accounts.FindAll().Count();
-            for (var x = currentCount; x < numberOfRecords; x++)
-                CreateUsernamePasswordAccount(x);
+            Enumerable.Range(currentCount, numberOfRecords)
+                .AsParallel()
+                .ForAll(i => CreateUsernamePasswordAccount(i));
         }
 
         private AccountResource CreateUsernamePasswordAccount(int prefix)
