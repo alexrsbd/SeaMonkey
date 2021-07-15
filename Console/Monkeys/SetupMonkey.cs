@@ -20,7 +20,6 @@ namespace SeaMonkey.Monkeys
         public SetupMonkey(OctopusRepository repository) : base(repository)
         {
         }
-
         public IntProbability ProjectsPerGroup { get; set; } = new LinearProbability(10, 20);
         public IntProbability ExtraChannelsPerProject { get; set; } = new DiscretProbability(0, 1, 1, 5);
         public IntProbability EnvironmentsPerGroup { get; set; } = new FibonacciProbability();
@@ -61,8 +60,8 @@ namespace SeaMonkey.Monkeys
             var numberOfProjects = ProjectsPerGroup.Get();
             Log.Information("Creating {n} projects for {group}", numberOfProjects, group.Name);
             Enumerable.Range(1, numberOfProjects)
-                .AsParallel()
-                .ForAll(p =>
+                .ToList()
+                .ForEach(p =>
                     {
                         var project = CreateProject(group, lifecycle, $"-{prefix:000}-{p:00}");
                         UpdateDeploymentProcess(project);
@@ -76,10 +75,9 @@ namespace SeaMonkey.Monkeys
         private void CreateChannels(ProjectResource project, LifecycleResource lifecycle)
         {
             var numberOfExtraChannels = ExtraChannelsPerProject.Get();
-
             Enumerable.Range(1, numberOfExtraChannels)
-                .AsParallel()
-                .ForAll(p =>
+                .ToList()
+                .ForEach(p =>
                     Repository.Channels.Create(new ChannelResource()
                     {
                         LifecycleId = lifecycle.Id,
@@ -95,8 +93,8 @@ namespace SeaMonkey.Monkeys
         {
             var envs = new EnvironmentResource[EnvironmentsPerGroup.Get()];
             Enumerable.Range(1, envs.Length)
-                .AsParallel()
-                .ForAll(e =>
+                .ToList()
+                .ForEach(e =>
                 {
                     var name = $"Env-{prefix:000}-{e}";
                     var envRes = Repository.Environments.FindByName(name);
