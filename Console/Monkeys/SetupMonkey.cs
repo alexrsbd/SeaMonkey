@@ -120,19 +120,22 @@ namespace SeaMonkey.Monkeys
             return envs;
         }
 
-
         private LifecycleResource CreateLifecycle(int id, IEnumerable<EnvironmentResource> environments)
         {
             var lc = new LifecycleResource()
             {
                 Name = "Life" + id.ToString("000"),
+                ReleaseRetentionPolicy = new RetentionPeriod(3, RetentionUnit.Days),
+                TentacleRetentionPolicy = new RetentionPeriod(3, RetentionUnit.Days),
             };
             lc.Phases.Add(new PhaseResource()
             {
                 Name = "AllTheEnvs",
                 OptionalDeploymentTargets = new ReferenceCollection(environments.Select(ef => ef.Id))
             });
-            return Repository.Lifecycles.Create(lc);
+
+            var existingLifecycle = Repository.Lifecycles.FindByName(lc.Name);
+            return existingLifecycle ?? Repository.Lifecycles.Create(lc);
         }
 
         private ProjectResource CreateProject(ProjectGroupResource group, LifecycleResource lifecycle, string postfix)
