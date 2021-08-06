@@ -134,7 +134,7 @@ namespace SeaMonkey.Monkeys
                 Name = "UsernamePasswordAccount-" + prefix.ToString("000"),
                 Username = "User" + prefix.ToString("000"),
                 Password = password,
-            } as AccountResource;
+            };
             return Repository.Accounts.Create(account);
         }
 
