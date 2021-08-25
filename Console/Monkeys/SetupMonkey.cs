@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using Octopus.Client;
+using Octopus.Client.Editors;
 using Octopus.Client.Model;
 using Polly;
 using SeaMonkey.ProbabilitySets;
@@ -13,16 +13,17 @@ using Serilog;
 
 namespace SeaMonkey.Monkeys
 {
-
     public class SetupMonkey : Monkey
     {
         private static byte[] lastImage;
         public SetupMonkey(OctopusRepository repository) : base(repository)
         {
         }
-        public IntProbability ProjectsPerGroup { get; set; } = new LinearProbability(10, 20);
+
+        public IntProbability ProjectsPerGroup { get; set; } = new LinearProbability(5, 10);
         public IntProbability ExtraChannelsPerProject { get; set; } = new DiscretProbability(0, 1, 1, 5);
         public IntProbability EnvironmentsPerGroup { get; set; } = new FibonacciProbability();
+        public IntProbability RunbooksPerProject { get; set; } = new LinearProbability(1, 5);
 
         public void CreateProjectGroups(int numberOfRecords)
         {
@@ -38,22 +39,16 @@ namespace SeaMonkey.Monkeys
 
         private void Create(int id, IReadOnlyList<MachineResource> machines)
         {
-            var envs = CreateEnvironments(id, machines);
-            var lc = CreateLifecycle(id, envs);
-            var group = CreateProjectGroup(id);
-            CreateProjects(id, group, lc);
+            var environments = CreateEnvironments(id, machines);
+            var lifecycle = CreateLifecycle(id, environments);
+            var projectGroup = CreateProjectGroup(id);
+            CreateProjects(id, projectGroup, lifecycle);
         }
-
 
         private ProjectGroupResource CreateProjectGroup(int prefix)
         {
-            return
-                Repository.ProjectGroups.Create(new ProjectGroupResource()
-                {
-                    Name = "Group-" + prefix.ToString("000")
-                });
+            return Repository.ProjectGroups.CreateOrModify("Group-" + prefix.ToString("000")).Instance;
         }
-
 
         private void CreateProjects(int prefix, ProjectGroupResource group, LifecycleResource lifecycle)
         {
@@ -64,10 +59,45 @@ namespace SeaMonkey.Monkeys
                 .ForEach(p =>
                     {
                         var project = CreateProject(group, lifecycle, $"-{prefix:000}-{p:00}");
-                        UpdateDeploymentProcess(project);
+                        var process = UpdateDeploymentProcess(project);
                         CreateChannels(project, lifecycle);
+                        CreateRunbooks(project);
                         SetVariables(project);
+                        EnableArcIfPackageStepsExist(project, process);
                         Log.Information("Created project {name}", project.Name);
+                    }
+                );
+        }
+
+        private void EnableArcIfPackageStepsExist(ProjectResource project, DeploymentProcessResource process)
+        {
+            var firstPackageActionName = process.Steps
+                .SelectMany(s => s.Actions)
+                .Where(a => a.Properties.ContainsKey("Octopus.Action.Package.NuGetPackageId"))
+                .Select(a => a.Name)
+                .FirstOrDefault();
+            if (string.IsNullOrEmpty(firstPackageActionName))
+                return;
+
+            var defaultChannel = Repository.Projects.GetAllChannels(project).Single(x => x.IsDefault);
+            project.ReleaseCreationStrategy.ReleaseCreationPackage = new DeploymentActionPackageResource(firstPackageActionName);
+            project.ReleaseCreationStrategy.ChannelId = defaultChannel.Id;
+            project.AutoCreateRelease = true;
+            Repository.Projects.Modify(project);
+        }
+
+        private void CreateRunbooks(ProjectResource project)
+        {
+            var numberOfRunbooks = RunbooksPerProject.Get();
+            Log.Information("Creating {n} runbooks for {project}", numberOfRunbooks, project.Name);
+            var runbookEditor = new RunbookEditor(Repository.Runbooks, Repository.RunbookProcesses);
+            Enumerable.Range(1, numberOfRunbooks)
+                .ToList()
+                .ForEach(i =>
+                    {
+                        runbookEditor.CreateOrModify(project, $"Runbook {project.Id} {i:000}", "");
+                        var runbook = runbookEditor.Instance;
+                        UpdateRunbookProcess(runbook);
                     }
                 );
         }
@@ -78,46 +108,40 @@ namespace SeaMonkey.Monkeys
             Enumerable.Range(1, numberOfExtraChannels)
                 .ToList()
                 .ForEach(p =>
-                    Repository.Channels.Create(new ChannelResource()
                     {
-                        LifecycleId = lifecycle.Id,
-                        ProjectId = project.Id,
-                        Name = "Channel " + p.ToString("000"),
-                        Rules = new List<ChannelVersionRuleResource>(),
-                        IsDefault = false
-                    })
+                        Repository.Channels
+                            .CreateOrModify(project, "Channel " + p.ToString("000"), string.Empty)
+                            .UsingLifecycle(lifecycle)
+                            .ClearRules();
+                    }
                 );
         }
 
         private EnvironmentResource[] CreateEnvironments(int prefix, IReadOnlyList<MachineResource> machines)
         {
-            var envs = new EnvironmentResource[EnvironmentsPerGroup.Get()];
-            Enumerable.Range(1, envs.Length)
+            var environments = new EnvironmentResource[EnvironmentsPerGroup.Get()];
+            Enumerable.Range(1, environments.Length)
                 .ToList()
                 .ForEach(e =>
                 {
                     var name = $"Env-{prefix:000}-{e}";
-                    var envRes = Repository.Environments.FindByName(name);
-                    envs[e - 1] = envRes ?? Repository.Environments.Create(new EnvironmentResource()
-                    {
-                        Name = name
-                    });
+                    environments[e - 1] = Repository.Environments.CreateOrModify(name).Instance;
                 });
 
-            lock(this)
+            lock (this)
             {
-                foreach (var env in envs)
+                foreach (var env in environments)
                 {
-                    if (machines.Any())
-                    {
-                        var machine = machines[Program.Rnd.Next(0, machines.Count)];
-                        Repository.Machines.Refresh(machine);
-                        machine.EnvironmentIds.Add(env.Id);
-                        Repository.Machines.Modify(machine);
-                    }
+                    if (!machines.Any())
+                        continue;
+
+                    var machine = machines[Program.Rnd.Next(0, machines.Count)];
+                    Repository.Machines.Refresh(machine);
+                    machine.EnvironmentIds.Add(env.Id);
+                    Repository.Machines.Modify(machine);
                 }
             }
-            return envs;
+            return environments;
         }
 
         private LifecycleResource CreateLifecycle(int id, IEnumerable<EnvironmentResource> environments)
@@ -133,22 +157,17 @@ namespace SeaMonkey.Monkeys
                 Name = "AllTheEnvs",
                 OptionalDeploymentTargets = new ReferenceCollection(environments.Select(ef => ef.Id))
             });
-
-            var existingLifecycle = Repository.Lifecycles.FindByName(lc.Name);
-            return existingLifecycle ?? Repository.Lifecycles.Create(lc);
+            
+            return Repository.Lifecycles.CreateOrModify(lc.Name).Instance;
         }
 
         private ProjectResource CreateProject(ProjectGroupResource group, LifecycleResource lifecycle, string postfix)
         {
-            var project = Repository.Projects.Create(new ProjectResource()
-            {
-                Name = "Project" + postfix,
-                Description = @"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
+            var description = @"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
 
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?",
-                ProjectGroupId = group.Id,
-                LifecycleId = lifecycle.Id,
-            });
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?";
+
+            var projectEditor = Repository.Projects.CreateOrModify("Project" + postfix, group, lifecycle, description, null);
 
             //try
             //{
@@ -160,7 +179,7 @@ Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium dolor
             //    Console.WriteLine($"Failed to create logo for {project.Name}", ex);
             //}
 
-            return project;
+            return projectEditor.Instance;
         }
 
         /// <summary>
@@ -191,7 +210,7 @@ Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium dolor
                                 .Result;
                         lastImage = image;
                     });
-                
+
                 return image;
             }
         }

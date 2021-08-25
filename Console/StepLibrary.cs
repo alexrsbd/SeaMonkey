@@ -5,10 +5,12 @@ namespace SeaMonkey
 {
     public static class StepLibrary
     {
+        public static string AcmePackageName = "Acme.Web";
+
         public static readonly Func<int, DeploymentStepResource>[] StepFactories = {
             GetSimpleScriptStep,
-            //GetPackageDeploymentStep,
-            //GetLargeStep
+            GetPackageDeploymentStep,
+            GetLargeStep
         };
 
         private static DeploymentStepResource GetSimpleScriptStep(int id)
@@ -69,15 +71,13 @@ namespace SeaMonkey
             step.Actions[0].Properties["Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings"] = "True";
             step.Actions[0].Properties["Octopus.Action.Package.DownloadOnTentacle"] = "False";
             step.Actions[0].Properties["Octopus.Action.Package.NuGetFeedId"] = "feeds-builtin";
-            step.Actions[0].Properties["Octopus.Action.Package.NuGetPackageId"] = "Acme.Web";
+            step.Actions[0].Properties["Octopus.Action.Package.NuGetPackageId"] = "#{" + AcmePackageName + "}"; // Reference as a variable to make ARC testing with variables easier.
             step.Properties["Octopus.Action.TargetRoles"] = "InstallStuff";
             return step;
         }
 
-
         public static DeploymentStepResource Random(int id)
             => StepFactories[Program.Rnd.Next(0, StepFactories.Length)](id);
-
 
         private const string AReallyBigString =
             @"Bring a spring upon her cable flogging parley bilge rat port broadside Sea Legs gaff. Hulk skysail fathom six pounders reef sails rigging black jack pillage. Aye dance the hempen jig draught keel spyglass chase guns galleon red ensign. Booty doubloon piracy interloper careen hempen halter aye man-of-war.

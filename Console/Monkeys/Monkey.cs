@@ -11,6 +11,7 @@ namespace SeaMonkey.Monkeys
         protected readonly OctopusRepository Repository;
 
         public IntProbability StepsPerProject { get; set; } = new FibonacciProbability(FibonacciProbability.Limit._5, FibonacciProbability.Limit._21);
+        public IntProbability StepsPerRunbook { get; set; } = new FibonacciProbability(FibonacciProbability.Limit._1, FibonacciProbability.Limit._3);
         public IntProbability VariablesPerProject { get; set; } = new DiscretProbability(10, 20, 100);
 
 
@@ -46,17 +47,32 @@ namespace SeaMonkey.Monkeys
             return Repository.DeploymentProcesses.Modify(process);
         }
 
+        protected RunbookProcessResource UpdateRunbookProcess(RunbookResource runbook)
+        {
+            var process = Repository.RunbookProcesses.Get(runbook.RunbookProcessId);
+            process.Steps.Clear();
+            var numberOfSteps = StepsPerRunbook.Get();
+            for (var x = 1; x <= numberOfSteps; x++)
+                process.Steps.Add(StepLibrary.Random(x));
+
+            return Repository.RunbookProcesses.Modify(process);
+        }
+
         protected void SetVariables(ProjectResource project)
         {
             var numberOfVariables = VariablesPerProject.Get();
             var variableSet = Repository.VariableSets.Get(project.VariableSetId);
-            variableSet.Variables = Enumerable.Range(1, numberOfVariables)
-                .Select(n => new VariableResource()
+
+            Enumerable.Range(1, numberOfVariables)
+                .ToList()
+                .ForEach(n =>
                 {
-                    Name = "Variable " + n.ToString("000"),
-                    Value = "This is the variable value for Variable " + n.ToString("000")
-                })
-                .ToArray();
+                    variableSet.AddOrUpdateVariableValue("Variable " + n.ToString("000"),
+                        "This is the variable value for Variable " + n.ToString("000"));
+                });
+
+            // To help us reference a variable-based package reference for ARC testing.
+            variableSet.AddOrUpdateVariableValue(StepLibrary.AcmePackageName, StepLibrary.AcmePackageName);
 
             Repository.VariableSets.Modify(variableSet);
         }
