@@ -141,7 +141,7 @@ namespace SeaMonkey
             {
                 Console.WriteLine("Running runbook run monkey...");
                 new RunbookRunMonkey(repository)
-                    .RunForAllRunbooks(maxNumberOfRunbookRuns: 20);
+                    .RunForAllRunbooks(maxNumberOfRunbookRuns: 100);
             }
 
             if (runConfigurationMonkey)
