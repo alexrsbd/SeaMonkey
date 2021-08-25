@@ -18,6 +18,7 @@ namespace SeaMonkey
             var runSetupMonkey = false;
             var runTenantMonkey = false;
             var runDeployMonkey = false;
+            var runRunbookRunMonkey = false;
             var runConfigurationMonkey = false;
             var runInfrastructureMonkey = false;
             var runLibraryMonkey = false;
@@ -31,6 +32,7 @@ namespace SeaMonkey
                 options.Add<string>("runSetupMonkey", "", e => runSetupMonkey = true);
                 options.Add<string>("runTenantMonkey", "", e => runTenantMonkey = true);
                 options.Add<string>("runDeployMonkey", "", e => runDeployMonkey = true);
+                options.Add<string>("runRunbookRunMonkey", "", e => runRunbookRunMonkey = true);
                 options.Add<string>("runConfigurationMonkey", "", e => runConfigurationMonkey = true);
                 options.Add<string>("runInfrastructureMonkey", "", e => runInfrastructureMonkey = true);
                 options.Add<string>("runLibraryMonkey", "", e => runLibraryMonkey = true);
@@ -49,7 +51,7 @@ namespace SeaMonkey
                     throw new ApplicationException(
                         "No apiKey specified. Please use the --apiKey parameter to specify an Octopus API key.");
 
-                var atLeastOneMonkeySpecified = runSetupMonkey || runTenantMonkey || runDeployMonkey ||
+                var atLeastOneMonkeySpecified = runSetupMonkey || runTenantMonkey || runDeployMonkey || runRunbookRunMonkey ||
                                                 runConfigurationMonkey || runInfrastructureMonkey || runLibraryMonkey ||
                                                 runVariablesMonkey;
                 if (!atLeastOneMonkeySpecified)
@@ -76,6 +78,7 @@ namespace SeaMonkey
                 RunMonkeys(repository,
                     runSetupMonkey,
                     runDeployMonkey,
+                    runRunbookRunMonkey,
                     runConfigurationMonkey,
                     runInfrastructureMonkey,
                     runLibraryMonkey,
@@ -96,6 +99,7 @@ namespace SeaMonkey
         private static void RunMonkeys(OctopusRepository repository,
             bool runSetupMonkey,
             bool runDeployMonkey,
+            bool runRunbookRunMonkey,
             bool runConfigurationMonkey,
             bool runInfrastructureMonkey,
             bool runLibraryMonkey,
@@ -107,7 +111,6 @@ namespace SeaMonkey
             if (runSetupMonkey)
             {
                 Console.WriteLine("Running setup monkey...");
-                //new SetupMonkey(repository).CreateTenants(500);
                 new SetupMonkey(repository)
                 {
                     StepsPerProject = new LinearProbability(1, 3)
@@ -132,6 +135,13 @@ namespace SeaMonkey
                 //new DeployMonkey(repository).RunForGroup(SetupMonkey.TenantedGroupName, 5000);
                 new DeployMonkey(repository)
                     .RunForAllProjects(maxNumberOfDeployments: 100);
+            }
+
+            if (runRunbookRunMonkey)
+            {
+                Console.WriteLine("Running runbook run monkey...");
+                new RunbookRunMonkey(repository)
+                    .RunForAllRunbooks(maxNumberOfRunbookRuns: 100);
             }
 
             if (runConfigurationMonkey)
