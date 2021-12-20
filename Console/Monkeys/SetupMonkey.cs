@@ -158,7 +158,7 @@ namespace SeaMonkey.Monkeys
                 OptionalDeploymentTargets = new ReferenceCollection(environments.Select(ef => ef.Id))
             });
             
-            return Repository.Lifecycles.CreateOrModify(lc.Name).Instance;
+            return Repository.Lifecycles.Create(lc);
         }
 
         private ProjectResource CreateProject(ProjectGroupResource group, LifecycleResource lifecycle, string postfix)

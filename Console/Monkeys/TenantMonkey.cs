@@ -132,7 +132,7 @@ namespace SeaMonkey.Monkeys
     }
 
 
-    public static class Extendsions
+    public static class Extensions
     {
         public static IEnumerable<T> TakeRandomSubset<T>(this IEnumerable<T> elements, int countToTake)
         {
