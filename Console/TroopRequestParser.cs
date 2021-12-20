@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Octopus.CoreUtilities.Extensions;
 using Octopus.Shared.Internals.Options;
 using SeaMonkey.Exceptions;
@@ -13,59 +12,50 @@ namespace SeaMonkey
                 throw new InvalidTroopRequestException(
                     "No arguments specified. Please provide a server, apiKey and some monkeys you wish to run. E.g. SeaMonkey.exe --server=http://localhost:8065 --apiKey=API-1234 --runConfigurationMonkey --runLibraryMonkey");
 
-            var data = ParseOptions(args);
-
-            var request = new TroopRequest(data.ServerAddress, data.ApiKey, data.MonkeyBreeds);
+            var request = ParseOptions(args);
             return request;
         }
 
         // ReSharper disable once ParameterTypeCanBeEnumerable.Local
-        private ParsedArgs ParseOptions(string[] args)
+        private TroopRequest ParseOptions(string[] args)
         {
-            var parsedArgs = new ParsedArgs();
+            var requestBuilder = new TroopRequestBuilder();
 
             var options = new OptionSet();
 
             options.Add<string>("server=", "The Octopus Server URI, E.g. http://localhost:8065",
-                e => parsedArgs.ServerAddress = e);
+                e => requestBuilder.WithServerAddress(e));
 
             options.Add<string>("apiKey=", "The Octopus API key, E.g. API-1234",
-                e => parsedArgs.ApiKey = e);
+                e => requestBuilder.WithApiKey(e));
 
             options.Add<string>("runSetupMonkey", "",
-                e => parsedArgs.MonkeyBreeds.Add(MonkeyBreed.Setup));
+                e => requestBuilder.WithMonkeyBreed(MonkeyBreed.Setup));
 
             options.Add<string>("runTenantMonkey", "",
-                e => parsedArgs.MonkeyBreeds.Add(MonkeyBreed.Tenant));
+                e => requestBuilder.WithMonkeyBreed(MonkeyBreed.Tenant));
 
             options.Add<string>("runDeployMonkey", "",
-                e => parsedArgs.MonkeyBreeds.Add(MonkeyBreed.DeployForAllProjects));
+                e => requestBuilder.WithMonkeyBreed(MonkeyBreed.DeployForAllProjects));
 
             options.Add<string>("runRunbookRunMonkey", "",
-                e => parsedArgs.MonkeyBreeds.Add(MonkeyBreed.RunbookRun));
+                e => requestBuilder.WithMonkeyBreed(MonkeyBreed.RunbookRun));
 
             options.Add<string>("runConfigurationMonkey", "",
-                e => parsedArgs.MonkeyBreeds.Add(MonkeyBreed.Configuration));
+                e => requestBuilder.WithMonkeyBreed(MonkeyBreed.Configuration));
 
             options.Add<string>("runInfrastructureMonkey", "",
-                e => parsedArgs.MonkeyBreeds.Add(MonkeyBreed.Infrastructure));
+                e => requestBuilder.WithMonkeyBreed(MonkeyBreed.Infrastructure));
 
             options.Add<string>("runLibraryMonkey", "",
-                e => parsedArgs.MonkeyBreeds.Add(MonkeyBreed.Library));
+                e => requestBuilder.WithMonkeyBreed(MonkeyBreed.Library));
 
             options.Add<string>("runVariablesMonkey", "",
-                e => parsedArgs.MonkeyBreeds.Add(MonkeyBreed.CreateVariables));
+                e => requestBuilder.WithMonkeyBreed(MonkeyBreed.CreateVariables));
 
             options.Parse(args);
 
-            return parsedArgs;
-        }
-
-        private class ParsedArgs
-        {
-            public string ServerAddress { get; set; }
-            public string ApiKey { get; set; }
-            public SortedSet<MonkeyBreed> MonkeyBreeds { get; } = new SortedSet<MonkeyBreed>();
+            return requestBuilder.Build();
         }
     }
 }
