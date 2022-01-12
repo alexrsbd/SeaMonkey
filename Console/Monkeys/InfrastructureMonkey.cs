@@ -15,12 +15,11 @@ namespace SeaMonkey.Monkeys
     {
         private IntProbability RolesPerMachine { get; set; } = new LinearProbability(0, 4);
         public IntProbability EnvironmentsPerGroup { get; set; } = new FibonacciProbability();
-        private readonly string[] PossibleRoles = new string[] {
+        private readonly string[] PossibleRoles = {
             "Rick",
             "Morty",
             "Mr. Meeseeks",
-            "Roy's Carpet Store",
-            "InstallStuff", // <- need to have this role somewhere for setup.
+            "Roy's Carpet Store"
         };
         const string WorkerPoolPrefix = "GarblovianWorkerPool-";
         const string WorkerPrefix = "RickAndMortyWorker-";
@@ -201,12 +200,13 @@ namespace SeaMonkey.Monkeys
 
             var rolesPerMachine = RolesPerMachine.Get();
             machine.Roles.Add("cloud-region"); // All machines get this role.
-            for (int i = 0; i < rolesPerMachine; i++)
+            machine.Roles.Add("InstallStuff"); // <- need to have this role somewhere for setup.
+            for (var i = 0; i < rolesPerMachine; i++)
             {
-                if (i < this.PossibleRoles.Length)
-                    machine.Roles.Add(this.PossibleRoles[i]);
+                if (i < PossibleRoles.Length)
+                    machine.Roles.Add(PossibleRoles[i]);
                 else // Fallback in case PossibleRoles doesn't have enough values based on the LinearProbability (shouldn't happen if they are in sync).
-                    machine.Roles.Add(this.PossibleRoles[0]);
+                    machine.Roles.Add(PossibleRoles[0]);
             }
 
             return machine;

@@ -162,8 +162,9 @@ namespace SeaMonkey.Monkeys
 
         private void CreateRelease(ProjectInfo projectInfo)
         {
-            if (ChanceOfAProcessChangeOnNewRelease.Get())
-                projectInfo.DeploymentProcess = UpdateDeploymentProcess(projectInfo.Project);
+            // TODO: fix this
+            // if (ChanceOfAProcessChangeOnNewRelease.Get())
+            //     projectInfo.DeploymentProcess = UpdateDeploymentProcess(projectInfo.Project);
 
             var release = new ReleaseResource()
             {

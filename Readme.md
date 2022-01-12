@@ -19,7 +19,12 @@ To populate a bunch of test data, perform the following:
 
 E.g. Running the library monkey:
 ```
-PS Z:\development\SeaMonkey\Console\bin\Debug\netcoreapp3.0> .\SeaMonkey.exe --server=http://localhost:8065 --apiKey=API-1234 --runLibraryMonkey
+PS Z:\development\SeaMonkey\Console\bin\Debug\netcoreapp3.1> .\SeaMonkey.exe --server=http://localhost:8065 --apiKey=API-1234 --runLibraryMonkey
+```
+
+E.g. Deploying packages on an empty database:
+```
+PS Z:\development\SeaMonkey\Console\bin\Debug\netcoreapp3.1> .\SeaMonkey.exe --server=http://localhost:8065 --apiKey=API-1234 --runSetupMonkey --runInfrastructureMonkey --runDeployMonkey
 ```
 
 NOTE: You'll likely need to update the `Octopus.Client` NuGet package dependency.
