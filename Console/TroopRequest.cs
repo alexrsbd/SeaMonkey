@@ -24,7 +24,7 @@ namespace SeaMonkey
 
             if (monkeyBreeds.IsNullOrEmpty())
                 throw new InvalidTroopRequestException(
-                    "No monkeys were specified. Please use one of the following flags to run a monkey: --runSetupMonkey --runTenantMonkey --runDeployMonkey --runConfigurationMonkey --runInfrastructureMonkey --runLibraryMonkey --runVariablesMonkey");
+                    "No monkeys were specified. Please use one of the following flags to run a monkey: --runSetupMonkey --runTenantMonkey --runDeployMonkey --runConfigurationMonkey --runInfrastructureMonkey --runLibraryMonkey --runVariablesMonkey --runSpacesMonkey");
 
             ServerAddress = serverAddress;
             ApiKey = apiKey;

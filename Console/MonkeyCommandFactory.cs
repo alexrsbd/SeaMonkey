@@ -30,6 +30,7 @@ namespace SeaMonkey
                 MonkeyBreed.RunbookRun => new RunbookRunCommand(_repository),
                 MonkeyBreed.Setup => new SetupCommand(_repository),
                 MonkeyBreed.Tenant => new TenantCommand(_repository),
+                MonkeyBreed.Spaces => new SpaceCommand(_repository),
                 _ => throw new ArgumentOutOfRangeException()
             };
             return command;

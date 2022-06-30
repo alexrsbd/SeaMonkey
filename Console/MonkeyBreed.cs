@@ -10,6 +10,7 @@ namespace SeaMonkey
         Configuration = 6,
         Library = 7,
         CreateVariables = 8,
-        CleanupVariables = 9
+        CleanupVariables = 9,
+        Spaces = 10
     }
 }
