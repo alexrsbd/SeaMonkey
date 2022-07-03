@@ -53,6 +53,9 @@ namespace SeaMonkey
             options.Add<string>("runVariablesMonkey", "",
                 e => requestBuilder.WithMonkeyBreed(MonkeyBreed.CreateVariables));
 
+            options.Add<string>("runSpacesMonkey", "",
+                e => requestBuilder.WithMonkeyBreed(MonkeyBreed.Spaces));
+
             options.Parse(args);
 
             return requestBuilder.Build();
