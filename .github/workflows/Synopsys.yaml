@@ -4,9 +4,9 @@ name: Synopsys
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "develop" ]
+    branches: [ "master" ]
 #  pull_request:
-#    branches: [ "develop" ]
+#    branches: [ "master" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -40,8 +40,8 @@ jobs:
           coverity_stream_name: ${{ github.event.repository.name }}
           polaris_serverUrl: ${{ secrets.POLARIS_SERVER_URL }}
           polaris_accessToken: ${{ secrets.POLARIS_ACCESS_TOKEN }}
-          polaris_application_name: "SUGA-Testing-WebGoat"
-          polaris_project_name: "SUGA-Testing-WebGoat"
+          polaris_application_name: "SUGA-Testing-SeaMonkey"
+          polaris_project_name: "SUGA-Testing-SeaMonkey"
           polaris_assessment_types: '["SAST", "SCA"]'
         env:
           LINUX_BRIDGE_URL: "https://sig-repo.synopsys.com/artifactory/bds-integrations-release/com/synopsys/integration/synopsys-action/0.1.61/ci-package-0.1.61-linux64.zip"
