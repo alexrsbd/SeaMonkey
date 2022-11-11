@@ -44,4 +44,4 @@ jobs:
           #polaris_project_name: "Support-Testing-SeaMonkey"
           #polaris_assessment_types: '["SAST", "SCA"]'
         env:
-          LINUX_BRIDGE_URL: "https://sig-repo.synopsys.com/artifactory/bds-integrations-release/com/synopsys/integration/synopsys-action/0.1.61/ci-package-0.1.61-macosx64.zip"
+          LINUX_BRIDGE_URL: "https://sig-repo.synopsys.com/artifactory/bds-integrations-release/com/synopsys/integration/synopsys-action/0.1.61/ci-package-0.1.61-macosx.zip"
